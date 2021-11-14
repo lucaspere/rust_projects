@@ -5,12 +5,17 @@ O programa deve informar ao jogador se o número inserido por ele está abaixo, 
 O programa deve sair automaticamente quando o jogador adivinhar o número ou quando ele inserir qualquer valor que não seja um número. */
 
 use std::io;
+use rand::Rng;
+
 fn main() {
-    println!("Adivinha o número");
+    let secret = rand::thread_rng().gen_range(1, 10001);
+
+    println!("Adivinha um número");
 
     let mut guess = String::new();
 
     io::stdin().read_line(&mut guess).expect("Falha ao ler a linha de comando.");
 
     println!("O número inserido é: {}", guess);
+    println!("O número gerado é: {}", secret);
 }
