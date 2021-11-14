@@ -4,18 +4,26 @@ O programa deve gerar um número aleatório entre 1 a 1000;
 O programa deve informar ao jogador se o número inserido por ele está abaixo, acima ou é igual o número aleatório;
 O programa deve sair automaticamente quando o jogador adivinhar o número ou quando ele inserir qualquer valor que não seja um número. */
 
-use std::io;
 use rand::Rng;
-
+use std::cmp::Ordering;
+use std::io;
 fn main() {
     let secret = rand::thread_rng().gen_range(1, 10001);
 
     println!("Adivinha um número");
 
     let mut guess = String::new();
-
-    io::stdin().read_line(&mut guess).expect("Falha ao ler a linha de comando.");
+    io::stdin()
+        .read_line(&mut guess)
+        .expect("Falha ao ler a linha de comando.");
+    let guess: u32 = guess.trim().parse().expect("Deu ruim");
 
     println!("O número inserido é: {}", guess);
     println!("O número gerado é: {}", secret);
+
+    match guess.cmp(&secret) {
+        Ordering::Equal => println!("Você ganhou!"),
+        Ordering::Less => println!("Muito abaixo"),
+        Ordering::Greater => println!("Muito acima"),
+    }
 }
