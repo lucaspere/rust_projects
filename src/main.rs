@@ -8,10 +8,11 @@ use rand::Rng;
 use std::cmp::Ordering;
 use std::io;
 fn main() {
-    let secret = rand::thread_rng().gen_range(1, 10001);
+    println!("Adivinha um número");
+    let secret = rand::thread_rng().gen_range(1, 1001);
 
     loop {
-        println!("Adivinha um número");
+        println!("Por favor, Digite seu palpite de um número");
 
         let mut guess = String::new();
         io::stdin()
