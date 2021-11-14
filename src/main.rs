@@ -10,20 +10,26 @@ use std::io;
 fn main() {
     let secret = rand::thread_rng().gen_range(1, 10001);
 
-    println!("Adivinha um número");
+    loop {
+        println!("Adivinha um número");
 
-    let mut guess = String::new();
-    io::stdin()
-        .read_line(&mut guess)
-        .expect("Falha ao ler a linha de comando.");
-    let guess: u32 = guess.trim().parse().expect("Deu ruim");
+        let mut guess = String::new();
+        io::stdin()
+            .read_line(&mut guess)
+            .expect("Falha ao ler a linha de comando.");
+        let guess: u32 = match guess.trim().parse() {
+            Ok(num) => num,
+            Err(_) => continue,
+        };
 
-    println!("O número inserido é: {}", guess);
-    println!("O número gerado é: {}", secret);
-
-    match guess.cmp(&secret) {
-        Ordering::Equal => println!("Você ganhou!"),
-        Ordering::Less => println!("Muito abaixo"),
-        Ordering::Greater => println!("Muito acima"),
+        println!("O número inserido é: {}", guess);
+        match guess.cmp(&secret) {
+            Ordering::Equal => {
+                println!("Você ganhou!");
+                break;
+            },
+            Ordering::Less => println!("Muito abaixo"),
+            Ordering::Greater => println!("Muito acima"),
+        }
     }
 }
