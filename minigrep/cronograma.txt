@@ -1,0 +1,48 @@
+Aula 02/02 Início Período Escolar
+1 02/02 Apresentação da Disciplina
+2 03/02 Revisão e Nivelamento
+3 09/02 Revisão e Nivelamento
+4 10/02 Introdução a Teste de Software
+5 16/02 Teste Unitário - Implementação Python e Java
+6 17/02 Testes no Processo de Desenvolvimento
+7 23/02 Teste Funcional
+8 24/02 Teste Funcional
+02/03 Recesso
+9 03/03 Teste Funcional
+10 09/03 Teste Estrutural
+11 10/03 Teste Estrutural
+12 16/03 Apresentação TP 1
+13 17/03 Apresentação TP 1
+14 23/03 Revisão Prova 1
+15 24/03 Prova 1
+16 30/03 Métricas de Avaliação de Plano de Teste
+17 31/03 Complexidade Ciclomática para Teste Estrutural
+18 06/04 Teste de Integração
+19 07/04 Teste de Integração - Prática
+20 13/04 Debugging
+14/04 Recesso
+21 20/04 Teste Mutação
+21/04 Feriado
+22 27/04 Estimativas, Medidas, Métricas e Indicadores em Gestão de Processo de Teste
+23 28/04 Discussão Paper Code Defender
+24 04/05 Prática Code Defender
+25 05/05 Prática Code Defender
+26 11/05 Revisão Prova 2
+27 12/05 Prova 2
+28 18/05 Mock
+29 19/05 Introdução a TDD: Projeto e Qualidade de Projeto
+30 25/05 Refatorações e Bad Smells
+31 26/05 Refatorações e Bad Smells
+32 01/06 Refatorações e Bad Smells
+33 02/06 Refatorações e Bad Smells
+34 08/06 TDD
+35 09/06 TDD
+36 15/06 Apresentação do TP Final
+16/06 Feriado
+37 22/06 Revisão Prova 3
+38 23/06 Prova 3
+39 29/06 Resultados e Dúvidas
+40 30/06 Reavaliação
+11/06 Termino Semestre Letivo Veteranos 17 semanas
+30/06 Termino Semestre Letivo Veteranos 20 semanas
+14/07 Término Período Escol
