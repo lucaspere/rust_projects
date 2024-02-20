@@ -21,8 +21,8 @@ Read and Absorb: Read Chapters 1 through 4 of "The Rust Programming Language" bo
 
 #### Exercise 2: References & Borrowing
 
-- Create a struct to represent a Library that has a books field (a vector of Book structs – you might implement Book tomorrow).
-- Write a checkout_book function on Library. It should take a `&mut` self and the title of a book, find the book in the library and change a flag representing its “checked out” status.
+- Create a struct to represent a ``Library`` that has a books field (a vector of Book structs – you might implement Book tomorrow).
+- Write a ``checkout_book`` function on ``Library``. It should take a `&mut` self and the title of a book, find the book in the library and change a flag representing its “checked out” status.
 - Write a `list_available_books` function that uses an immutable reference (`&self`) and prints the titles of only the available books.
 - Explore: Try making some mistakes - can you have a mutable and immutable borrow of the same library at the same time? Why or why not?
 
@@ -37,7 +37,7 @@ Your Explanation: In your own words, explain these concepts to me:
 
 ### Understanding Ownership
 
-Ownership is an important technique to guarantee safe memory management in the Rust language. It prevents **_double free_** by the rule of dropping a value in final of its scope. Another bug is **_data race_** which occurs when two variables can mutate the same value. Ownership prevents this by not allowing two variables carrying multiple mutable references to the same value. The rule is: that one immutable value can have multiple references, but a mutable value can only have one mutable reference. Ownership also prevents the bug **_Dangling references_** at compile time checking if a variable is trying to get a reference from a value that has already dropped. The GC in JavaScript handles this automatically in the background by checking periodically if a variable is referenced by others.
+Ownership is an important technique to guarantee safe memory management in the Rust language. It prevents **_double free_** by the rule of dropping a value in final of its scope. Another bug is **_data race_** which occurs when two variables can mutate the same value. Ownership prevents this by not allowing two variables carrying multiple mutable references to the same value. The rule is: that one immutable value can have multiple references, but a mutable value can only have one mutable reference. Ownership also prevents the bug **_Dangling references_** at compile time checking if a variable is trying to get a reference from a value that has already dropped. The GC in JavaScript handles this automatically in the background by checking periodically if a variable is referenced by any others.
 
 
 ### Exercise 1: Transfer of Ownership
