@@ -1,7 +1,35 @@
 # Day-4: Build a (Basic) Linked List - 25-02-2024
 
 ## Exercises
+hat's the spirit! Here's the plan for Day 4, where we'll turn the concepts from yesterday into working Rust code.
 
+Objective: Build a (Basic) Linked List
+
+**Recap: We'll briefly review:**
+- The mental model of nodes, data, and pointers.
+-  Why linked lists help us overcome limitations of arrays or fixed structs.
+
+**Node Implementation:**
+- You'll define the Node struct with likely these fields:
+    - data: T (Generic type 'T' to make it flexible)
+    - next: ``Option<Box<Node<T>>>`` (The magic of ownership in action!)
+- Discussion: Why do we use Option and Box here? We'll break down how these are critical for Rust-style safe memory management in our linked list.
+
+**List Struct:**
+- We'll define a struct called ``LinkedList<T>`` to represent the overall list. For now, i- might just have a head: ``Option<Box<Node<T>>>`` field to track the start of the chain of nodes.
+
+**Simple Operations:**
+- add_to_head: A method on ``LinkedList`` to add a new node at the beginning of the list. This will involve manipulating the next pointers and safely handling ownership.
+- iter (maybe): If time allows, we'll start thinking about how to iterate over a linked list in Rust (borrowing concepts!). This is where we might introduce the idea of a temporary reference.
+
+Pointers in Rust
+
+It's a bit of a mind-bender at first, but today, let's focus on these aspects:
+- ``Box<T>``: Think of it as "owning a value on the heap." This is crucial for nodes to own their next node.
+- ``Option<T>``: For representing the possible absence of a node (the end of our list). This prevents null pointer issues.
+
+
+## My Answers
 ### Recap: Review
 #### The mental model of nodes, data, and pointers.
 The nodes represent a *Node* that holds a data of the list and a pointer (reference) to the next ``Node`` in the list. With that logic, the List can be Linked between ``Nodes``.

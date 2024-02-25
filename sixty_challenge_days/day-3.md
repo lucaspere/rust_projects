@@ -1,5 +1,39 @@
 # Day 3: Data Structure in Rust - Linked List - 25-02-2024
 
+## Introduction
+### The 'Why' Behind Data Structures
+
+**Structs and enums are amazing! But there are limitations to what they can easily model:**
+- Fixed Size: A struct with 3 fields always takes up the same amount of memory, regardless of how much data you actually need to store.
+- Relationships: How do you elegantly represent hierarchies or connections where the number of elements can grow or shrink? It gets clunky with just structs within structs.
+
+**Enter Linked Lists**
+- A Chain of Boxes: A linked list can be thought of as individual boxes (nodes) where:
+    - Each box holds your data.
+    - Each box has a pointer (like a reference!) to the next box in the chain.
+- Benefits:
+    -Dynamic Size: Add or remove items by just changing the pointers between boxes. No need to know how many items you'll have in advance.
+    -Insertion/Removal: Can insert in the middle of a list just by adjusting pointers, unlike an array where you'd shift elements.
+
+**Rust Twist: Ownership in Linked Lists**
+1. Who Owns What: Each node in the list "owns" its data and the pointer to the next node.
+2. Lifetime Matters: When a node is removed, the linked list is responsible for ensuring there are no dangling pointers, just like Rust prevents dangling references in regular code.
+
+### Day 3: Approach
+- Visualization: We'll use drawings and diagrams to solidify how linked lists work before a single line of code.
+- Simple 'Node' Struct: You'll define a struct representing a single node in a list. This will involve:
+    - A field for data (let's keep it generic - you can use T to represent any kind of data)
+    - A field to potentially hold a reference to the next node. This is where it gets interesting! We'll likely use Rust's Box<T> type.
+- List Representation (Maybe): If we have time, we'll start thinking about a struct to represent the whole list itself.
+
+Prepare Your Mental Canvas
+
+Here are some resources for reference (no need to stress about understanding all the code in them right now):
+
+1. Visualizing Linked List: https://visualgo.net/en/list Play around with this!
+2. Simple Rust Example: (Focus on the Node struct definition) https://rust-unofficial.github.io/too-many-lists/first-layout.html
+
+
 ## What is it?
 [Linked List](https://pt.wikipedia.org/wiki/Lista_ligada) is a linear data structure that allows the data dynamically grow or shrink.
 This capability to change its size is important and implemented in different use cases. For example:
