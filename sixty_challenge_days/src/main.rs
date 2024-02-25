@@ -1,4 +1,4 @@
-use std::{mem::size_of_val, path::Path};
+use std::{collections::LinkedList, mem::size_of_val, path::Path};
 
 use impls::file::File;
 
@@ -41,4 +41,31 @@ fn main() {
     product.price = 542313.00;
     product.name = "Lucas".to_string();
     println!("size of Product {}", size_of_val(&product));
+
+    let mut list = LinkedList::new();
+
+    list.push_back(Expense(54.242));
+    list.push_back(Expense(32.242));
+    list.push_front(Expense(879.242));
+    list.push_front(Expense(1233.52));
+
+    println!("{:?}", list);
+    list.pop_back();
+    list.pop_front();
+    println!("{:?}", list);
+
+    println!("Head: {:?}", list.front());
+    println!("Tail: {:?}", list.back());
+    Expense::print_total(list.into_iter());
+}
+
+#[derive(Debug)]
+struct Expense(f32);
+
+impl Expense {
+    fn print_total<T: Iterator<Item = Self>>(iter: T) {
+        let sum = iter.fold(0f32, |sum, curr| sum + curr.0);
+
+        println!("Total values: {}", sum);
+    }
 }
