@@ -9,7 +9,7 @@ This capability to change its size is important and implemented in different use
 ### Concepts
 It's a linear structure, so the visual concept is like a rope with knots, each one points to another. Like the rope, a Linked List has a **head** and **tail** to reference the first and the last node of the list. Those references are important to perform ***constant time***, **O(1)**, to **delete** and **insert** both front and back in the List. To read some content in the list, you have to interact from the first till your node in a list. For that reason, the Linked list has sequential access (**linear time**), for **reading O(n)**
 
-![Linked List Illustration](438px-C_language_linked_list.png)
+![Linked List Illustration](public/images/438px-C_language_linked_list.png)
 *Visual illustration of an integer Linked Link. Each Node points to another Node. Observe the last Node points _to nothing _indicating_ the end_ of the List*.
 
 
@@ -18,7 +18,7 @@ It's a linear structure, so the visual concept is like a rope with knots, each o
 This indicates the efficiency of memory usage for an algorithm or data structure. Linked List doesn't perform memory overhead because with value inserted in the List is just a pointer to its location. So the size of the List remains the same while it is growing or shrinking.
 
 #### Scalability Complexity
-![Big O Notation Linked List](LL_Big_O.jpg)
+![Big O Notation Linked List](public/images/LL_Big_O.jpg)
 *Table summarizing the Big O Notation for the Arrays and List*.
 
 In most cases, the complexity is O(1) or O(n), but it depends on the situation and the action.
@@ -91,7 +91,7 @@ list.remove(1);
 println!("{:?}", list); // [Expense(879.242)]
 ```
 
-###### Reading
+##### Reading
 For reading you have to loop through the list until you find the value you're looking for. The Linked List, like other `collections` types, implements the ``Iterator`` trait, so you can use it to perform some basic functionalities. As you have to iterate over the list reading the content, this has O(n) performance.
 
 ```rs
