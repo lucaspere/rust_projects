@@ -33,8 +33,8 @@ Here are some resources for reference (no need to stress about understanding all
 1. Visualizing Linked List: https://visualgo.net/en/list Play around with this!
 2. Simple Rust Example: (Focus on the Node struct definition) https://rust-unofficial.github.io/too-many-lists/first-layout.html
 
-
-## What is it?
+## My Answers
+### What is it?
 [Linked List](https://pt.wikipedia.org/wiki/Lista_ligada) is a linear data structure that allows the data dynamically grow or shrink.
 This capability to change its size is important and implemented in different use cases. For example:
 - A [queue](https://en.wikipedia.org/wiki/Queue_(abstract_data_type)) is an implementation of a Linked List with FIFO (First-in-First-out). The main logic is the first to get in the queue is the first to get out. This structure is very useful when you need to perform a task whenever one arrives like Message System and Order System.
