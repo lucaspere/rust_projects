@@ -143,3 +143,7 @@ Expense::print_total(list.into_iter()); // Total values: 879.242
 
 
 
+### References
+1. Bhargava, A. Y. (2016). Selection Sort. Grokking Algorithms: An Illustrated Guide for Programmers and Other Curious People (chapter 2). Manning Publications.
+2. Klabnik, S., & Nichols, C. (2023). Smart Pointers. The Rust Programming Language, 2nd Edition (chapter 15). No Starch Press
+3. [Lista ligada](https://pt.wikipedia.org/wiki/Lista_ligada)

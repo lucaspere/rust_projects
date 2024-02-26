@@ -1,4 +1,4 @@
-# Day-4: Build a (Basic) Linked List - 25-02-2024
+# Day 4: Build a (Basic) Linked List - 25-02-2024
 
 ## Exercises
 hat's the spirit! Here's the plan for Day 4, where we'll turn the concepts from yesterday into working Rust code.
