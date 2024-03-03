@@ -37,72 +37,10 @@ handling collisions by saving all elements in the table itself. So the size of t
 
 ## Rust Implementation
 ### Exercise 4, 5 and 6:
-```rs
-use std::{array, collections::LinkedList};
-
-pub struct AHash {
-    table: [(u32, LinkedList<(String, i32)>); 27],
-}
-
-impl AHash {
-    fn new() -> Self {
-        Self {
-            table: array::from_fn::<(u32, LinkedList<(String, i32)>), 27, _>(|i| {
-                (i as u32, LinkedList::new())
-            }),
-        }
-    }
-    fn hash_function(&self, key: &str) -> Option<u32> {
-        let first_char = key.chars().next().and_then(|r| Some((r as u32) - 97));
-
-        first_char
-    }
-
-    pub fn insert(&mut self, key: String, value: i32) -> Option<i32> {
-        self.hash_function(key.as_str()).map(|pos: u32| {
-            let (_, list) = &mut self.table[pos as usize];
-            list.push_back((key, value));
-            value
-        })
-    }
-
-    pub fn search(&self, key: String) -> Option<i32> {
-        self.hash_function(key.as_str()).and_then(|pos| {
-            let (_, list) = &self.table[pos as usize];
-            let result = list
-                .iter()
-                .find(|(name, _)| *name == key)
-                .map(|(name, value)| *value);
-
-            result
-        })
-    }
-}
-
-```
+[AHash](https://github.com/lucaspere/rust_projects/blob/85da42a6ff7f7ffc7e2dc5fd783ea2497a777f3a/sixty_challenge_days/src/impls/hashes/a_hash.rs)
 
 ### Exercise 7: Count Word Frequencies
-
-```rs
-pub struct WordCountTable {
-    table: HashMap<String, i64>,
-}
-
-impl WordCountTable {
-    pub fn count_word(&mut self, word: &String) {
-        self.table
-            .entry(word.to_string())
-            .and_modify(|count| *count += 1)
-            .or_default();
-    }
-
-    pub fn summarize(&self) {
-        for word in &self.table {
-            println!("Word: {}, Total: {}", word.0, word.1);
-        }
-    }
-}
-```
+[Word Count](https://github.com/lucaspere/rust_projects/blob/85da42a6ff7f7ffc7e2dc5fd783ea2497a777f3a/sixty_challenge_days/src/impls/hashes/word_counter_hash.rs)
 
 ### Exercise 8: Find Duplicates
 
@@ -114,4 +52,9 @@ fn determine_array_has_duplicate<T: PartialEq + Eq + Hash>(vec: Vec<T>) -> bool 
 ```
 
 ### Exercise 9: Implement a Cache
-I know that I can use the Linear Probing to solve this problem, but I do not know why you suggested using the doubly linked list.
+[LRUCache](https://github.com/lucaspere/rust_projects/blob/85da42a6ff7f7ffc7e2dc5fd783ea2497a777f3a/sixty_challenge_days/src/impls/hashes/lru_cache.rs)
+
+## References
+[GfG - Hash Table](https://www.geeksforgeeks.org/hashing-data-structure/?ref=lbp)
+[GfG - LRU Cache](https://www.geeksforgeeks.org/lru-cache-implementation/?ref=lbp)
+[Grokking Algorithm cp 5](https://livebook.manning.com/book/grokking-algorithms-second-edition/chapter-5/v-4/)
