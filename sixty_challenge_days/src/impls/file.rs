@@ -1,4 +1,9 @@
-use std::{ffi::OsString, fs, io::Read, path::Path};
+use std::{
+    ffi::OsString,
+    fs,
+    io::{Error, Read},
+    path::Path,
+};
 
 pub struct File {
     pub name: OsString,
@@ -6,19 +11,17 @@ pub struct File {
 }
 
 impl File {
-    pub fn open_file(filename: &Path) -> Self {
+    pub fn open_file(filename: &Path) -> Result<Self, Error> {
         let mut new_file = File {
             contents: String::new(),
             name: OsString::new(),
         };
 
-        if let Ok(mut file) = fs::File::open(filename) {
-            // Safely: unwrapped after open the file
-            new_file.name = filename.file_name().unwrap().to_os_string();
-            if let Ok(_) = file.read_to_string(&mut new_file.contents) {}
-        }
+        let mut file = fs::File::open(filename)?;
+        new_file.name = filename.file_name().unwrap_or_default().to_os_string();
+        file.read_to_string(&mut new_file.contents)?;
 
-        new_file
+        Ok(new_file)
     }
 
     pub fn print_file(self) {
