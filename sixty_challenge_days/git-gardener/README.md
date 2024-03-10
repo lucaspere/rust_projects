@@ -17,6 +17,22 @@ Git Gardener 🌿🧑🏽‍🌾 is a Rust-powered command-line tool to help you
 * **Dry-Run Mode:** Preview which branches would be deleted, without actually performing the deletion.
 * **Flexible Configuration:** Override the target main branch and adjust the staleness threshold.
 
+## Roadmap (Upcoming Enhancements):
+*   **Core Functionality**
+      *   ~~**Stale Branch Cleanup:** Robust deletion of branches based on a configurable staleness threshold (e.g., no commits in the past 3 months).~~
+      *   ~~**Merged Branch Cleanup:**  Identify and delete branches whose history is fully contained within the main/target branch.~~
+      *   ~~**Dry Run Mode:** Preview the actions that would be taken without actually deleting branches.~~
+      *   ~~**User-Friendly Output:** Clear summaries of branches targeted for deletion, and success/error messages.~~
+      *   **Interactive Mode:** Prompt the user for confirmation before deleting each branch or allow bulk selection of branches for deletion.
+      *   **Forced Deletion:** A `--force` flag to override staleness and merged branch criteria, allowing the deletion of any specified branch (use with caution!).
+      *   **Branch Filtering:** Options to include/exclude branches based on name patterns (e.g., `--exclude 'release/*'`).
+*   **Gardener Mode & Refinements**
+      *   **Background Execution:**  Implement the "gardener" mode to periodically trigger cleanups on a schedule (using `cron` or similar).
+      *   **Configuration File:**  Allow users to store their preferred settings (main branch, default staleness, etc.) in a `.gitgardener` config file.
+      *   **Customizable Output:**  Options to format the output (text, simple JSON) for integration into other scripts or tools.
+
+
+
 ## Installation
 
 **Prerequisites:**
