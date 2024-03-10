@@ -26,10 +26,23 @@ Git Gardener 🌿🧑🏽‍🌾 is a Rust-powered command-line tool to help you
       *   **Interactive Mode:** Prompt the user for confirmation before deleting each branch or allow bulk selection of branches for deletion.
       *   **Forced Deletion:** A `--force` flag to override staleness and merged branch criteria, allowing the deletion of any specified branch (use with caution!).
       *   **Branch Filtering:** Options to include/exclude branches based on name patterns (e.g., `--exclude 'release/*'`).
+
 *   **Gardener Mode & Refinements**
       *   **Background Execution:**  Implement the "gardener" mode to periodically trigger cleanups on a schedule (using `cron` or similar).
       *   **Configuration File:**  Allow users to store their preferred settings (main branch, default staleness, etc.) in a `.gitgardener` config file.
       *   **Customizable Output:**  Options to format the output (text, simple JSON) for integration into other scripts or tools.
+ 
+*   **Robustness & User Experience**
+
+      *   **Comprehensive Testing**: Test suite covering various branch scenarios (staleness, merged status, edge cases) to ensure reliability.
+      *   **Informative Error Handling**: Catch Git interaction errors, provide meaningful messages to the user, and handle unexpected input gracefully.
+      *   **Main Branch Override**: Allow cleanup against branches other than "main".
+      *   **Interactive Confirmation**: Prompt the user to confirm deletions before proceeding, enhancing safety..
+
+*   **Phase 4: Reusability & Distribution**
+      *   **Code Refactoring:**  Modularize logic for potential use as a library within other Rust projects.
+      *   **Explore crates.io Publishing:**  Consider packaging `git-gardener` for easy installation via `cargo install git-gardener`.
+
 
 
 
