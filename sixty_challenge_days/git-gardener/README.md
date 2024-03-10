@@ -2,7 +2,7 @@
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="https://github.com/lucaspere/rust_projects/assets/46873546/0cb6ec24-93c9-46c2-a70c-d97b9b215df7">
       <source media="(prefers-color-scheme: light)" srcset="https://github.com/lucaspere/rust_projects/assets/46873546/0cb6ec24-93c9-46c2-a70c-d97b9b215df7">
-      <img alt="Git-Gardener" title="Ferris Gardener" src="https://github.com/lucaspere/rust_projects/assets/46873546/0cb6ec24-93c9-46c2-a70c-d97b9b215df7">
+      <img alt="Git-Gardener" title="Ferris Gardener" src="https://github.com/lucaspere/rust_projects/assets/46873546/0cb6ec24-93c9-46c2-a70c-d97b9b215df7" height="350px">
     </picture>
 </p>
 
