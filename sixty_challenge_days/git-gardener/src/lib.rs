@@ -41,3 +41,19 @@ impl GitGardener {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::path::PathBuf;
+
+    use crate::arg::PeriodArgs;
+
+    use super::*;
+
+    #[test]
+    fn test_new() {
+        let gardener = GitGardener::new();
+        assert!(gardener.repository.is_none());
+        assert_eq!(gardener.branch, None);
+    }
+}

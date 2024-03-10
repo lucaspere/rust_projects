@@ -40,7 +40,7 @@ pub struct GitGardenerArgs {
     pub command: Option<StalenessDate>,
 }
 
-#[derive(clap::ValueEnum, Default, Clone, Debug, Serialize)]
+#[derive(clap::ValueEnum, Default, Clone, Debug, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum PeriodArgs {
     Days,

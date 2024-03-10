@@ -7,6 +7,7 @@ use git2::Time;
 use crate::arg::{GitGardenerArgs, PeriodArgs, StalenessDate};
 use crate::GitGardener;
 
+#[derive(PartialEq, Eq, Debug)]
 pub struct Branch {
     pub number: u64,
     pub period: PeriodArgs,
@@ -73,5 +74,80 @@ impl Branch {
 
             Some(datetime)
         })?
+    }
+}
+
+#[cfg(test)]
+mod tests {
+
+    use super::*;
+    use git2::Repository;
+    use std::path::PathBuf;
+
+    #[test]
+    fn test_load_from_args() {
+        let args: Option<StalenessDate> = None;
+        let branch = Branch::load_from_args(&args);
+        assert_eq!(branch, None);
+
+        let args: Option<StalenessDate> = Some(StalenessDate::Steleness {
+            number: 5,
+            period: PeriodArgs::Days,
+        });
+        let branch = Branch::load_from_args(&args);
+        assert_eq!(
+            branch,
+            Some(Branch {
+                number: 5,
+                period: PeriodArgs::Days,
+            })
+        );
+    }
+
+    #[test]
+    fn test_delete_steleness_branches() -> Result<()> {
+        let repo_path = PathBuf::from("/tmp/test_repo");
+        let repo = Repository::init(&repo_path)?;
+        let gardener = GitGardener {
+            repository: Some(repo),
+            branch: None,
+        };
+
+        let branch = Branch {
+            number: 7,
+            period: PeriodArgs::Months,
+        };
+
+        let args = GitGardenerArgs {
+            dry_run: true,
+            main_branch: "master".to_string(),
+            git_repository: repo_path.clone(),
+            command: None,
+        };
+        branch.delete_steleness_branches(&args, &gardener)?;
+
+        let args = GitGardenerArgs {
+            dry_run: false,
+            main_branch: "master".to_string(),
+            git_repository: repo_path,
+            command: None,
+        };
+
+        branch.delete_steleness_branches(&args, &gardener)?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_get_commit_date() {
+        let branch = Branch {
+            number: 7,
+            period: PeriodArgs::Months,
+        };
+
+        let time = Time::new(1627639200, 0);
+
+        let commit_date = branch.get_commit_date(time);
+        assert_eq!(commit_date.is_some(), true);
     }
 }
