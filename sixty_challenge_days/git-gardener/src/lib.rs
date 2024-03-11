@@ -44,10 +44,6 @@ impl GitGardener {
 
 #[cfg(test)]
 mod tests {
-    use std::path::PathBuf;
-
-    use crate::arg::PeriodArgs;
-
     use super::*;
 
     #[test]

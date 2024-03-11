@@ -44,21 +44,19 @@ impl Branch {
         let branches = branches.filter_map(|branch| branch.ok());
 
         for (mut branch, _) in branches {
-            if args.dry_run {
-                if let Ok(commit) = branch.get().peel_to_commit() {
-                    let time = self.get_commit_date(commit.time());
-                    if period_of > time {
-                        if args.dry_run {
-                            if let Some(name) =
-                                branch.get().name().and_then(|name| name.split("/").last())
-                            {
-                                if name != args.main_branch {
-                                    println!("This branch will be deleted {}", name.red());
-                                }
+            if let Ok(commit) = branch.get().peel_to_commit() {
+                let time = self.get_commit_date(commit.time());
+                if period_of > time {
+                    if args.dry_run {
+                        if let Some(name) =
+                            branch.get().name().and_then(|name| name.split("/").last())
+                        {
+                            if name != args.main_branch {
+                                println!("This branch will be deleted {}", name.red());
                             }
-                        } else {
-                            branch.delete()?;
                         }
+                    } else {
+                        branch.delete()?;
                     }
                 }
             }
