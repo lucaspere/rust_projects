@@ -1,0 +1,16 @@
+[book]
+authors = ["lucaspere"]
+language = "en"
+multilingual = false
+src = "chapters"
+title = "60 Days Learning Rust"
+
+[rust]
+edition = "2021"
+
+[build]
+create-missing = false
+
+
+[output.html.playground]
+editable = true
