@@ -1,4 +1,4 @@
-use std::{collections::LinkedList, mem::size_of_val, path::Path};
+use std::{collections::LinkedList, io::Error, mem::size_of_val, path::Path};
 
 use impls::file::File;
 
@@ -9,9 +9,9 @@ use crate::impls::{
 
 mod impls;
 
-fn main() {
+fn main() -> Result<(), Error> {
     let day_1_path = Path::new("day-1.md");
-    let file = File::open_file(day_1_path);
+    let file = File::open_file(day_1_path)?;
     file.print_file();
 
     let width1 = 30;
@@ -57,6 +57,8 @@ fn main() {
     println!("Head: {:?}", list.front());
     println!("Tail: {:?}", list.back());
     Expense::print_total(list.into_iter());
+
+    Ok(())
 }
 
 #[derive(Debug)]
