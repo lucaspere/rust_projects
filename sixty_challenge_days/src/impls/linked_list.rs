@@ -67,38 +67,44 @@ impl<'a, T: PartialEq> LinkedList<'a, T> {
 
     pub fn iter(&self) -> LinkedListIterator<'a, T> {
         if let Some(head) = &self.head {
-            LinkedListIterator::new(Some(head.clone()))
+            LinkedListIterator::new(Rc::downgrade(head))
         } else {
-            LinkedListIterator::new(None)
+            LinkedListIterator::new(Weak::new())
         }
     }
 
-    pub fn delete_by_value(&mut self, value: T) -> Option<T> {
-        let mut tim = self.head.as_ref().map(|node| node.clone());
-        while let Some(head) = tim.as_ref() {
-            let now = head.clone();
-            let now = now.borrow();
-            if *now.data == value {
-                if let Some(next) = &head.borrow().next {
-                    if let Some(rc) = now.back.upgrade() {
-                        rc.borrow_mut().next = Some(next.clone());
-                        Some(rc.borrow().data)
-                    } else {
-                        None
-                    }
-                    .or_else(|| {
-                        self.head = Some(next.clone());
-                        None
-                    });
-                } else {
-                    if let Some(rc) = now.back.upgrade() {
-                        rc.borrow_mut().next = None;
-                    }
-                }
+    pub fn pop_front(&mut self) -> Option<&T> {
+        self.head.take().map(|node| {
+            let node = node.borrow();
+            self.head = node.next.as_ref().map(|node| node.clone());
 
-                tim = None
+            self.len -= 1;
+            node.data
+        })
+    }
+
+    pub fn pop_back(&mut self) -> Option<&T> {
+        self.tail.take().map(|node| {
+            let back = node.borrow().back.upgrade();
+            self.tail = back;
+
+            self.len -= 1;
+            node.borrow().data
+        })
+    }
+
+    pub fn delete_by_value(&mut self, value: T) -> Option<&T> {
+        let mut node = self.head.as_ref().map(|node| node.clone());
+
+        while let Some(head) = node.as_ref() {
+            if *head.borrow().data == value {
+                return if head.borrow().back.upgrade().is_some() {
+                    self.pop_back()
+                } else {
+                    self.pop_front()
+                };
             } else {
-                tim = tim.and_then(|node| node.borrow().next.clone());
+                node = node.and_then(|node| node.borrow().next.as_ref().map(|node| node.clone()));
             }
         }
 
@@ -121,22 +127,19 @@ struct LinkedListIterator<'a, T> {
 }
 
 impl<'a, T> LinkedListIterator<'a, T> {
-    pub fn new(data: Option<Rc<RefCell<Node<&'a T>>>>) -> Self {
-        Self {
-            data: data.map(|d| Rc::downgrade(&d)).unwrap_or(Weak::new()),
-        }
+    pub fn new(data: Weak<RefCell<Node<&'a T>>>) -> Self {
+        Self { data }
     }
 }
 impl<'a, T> Iterator for LinkedListIterator<'a, T> {
     type Item = &'a T;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.data.upgrade().map(|node| {
-            if let Some(node_rc) = node.borrow().next.as_ref() {
-                self.data = Rc::downgrade(node_rc);
-            }
-
-            node.borrow().data
+        self.data.upgrade().and_then(|node| {
+            node.borrow().next.as_ref().map(|inner_node| {
+                self.data = Rc::downgrade(inner_node);
+                node.borrow().data
+            })
         })
     }
 }
@@ -145,7 +148,10 @@ impl<'a, T> Iterator for LinkedListIterator<'a, T> {
 mod test {
 
     use super::{LinkedList, Node};
-    use std::{cell::RefCell, rc::Rc};
+    use std::{
+        cell::RefCell,
+        rc::{Rc, Weak},
+    };
 
     #[test]
     fn should_compute_the_len_of_the_list() {
@@ -156,26 +162,14 @@ mod test {
 
         assert_eq!(list.len, 3);
     }
-    // #[test]
-    // fn should_add_to_the_head_and_tail_and_linked_correctly() {
-    //     let mut list = LinkedList::<f32>::new();
-    //     list.add_to_tail(&1.00);
-    //     list.add_to_head(&2.54);
+    #[test]
+    fn should_add_to_the_head_and_tail_and_linked_correctly() {
+        let mut list = LinkedList::<f32>::new();
+        list.add_to_tail(&1.00);
+        list.add_to_head(&2.54);
 
-    //     let back = Rc::new(RefCell::new(Node {
-    //         data: &1.00,
-    //         next: None,
-    //         back: None,
-    //     }));
-    //     let front = Rc::new(RefCell::new(Node {
-    //         data: &2.54,
-    //         next: Some(back.clone()),
-    //         back: Some(Rc::downgrade(&back.clone())),
-    //     }));
-
-    //     assert_eq!(list.tail, Some(back));
-    //     assert_eq!(list.head, Some(front));
-    // }
+        assert_ne!(list.head.unwrap().as_ptr(), list.tail.unwrap().as_ptr());
+    }
     #[test]
     fn should_iterate_the_list() {
         let values = [2.54f32, 54.654, 543.42];
@@ -196,16 +190,38 @@ mod test {
         list.add_to_head(&54.654);
         list.add_to_head(&2.54);
 
-        list.delete_by_value(543.42);
+        let first = list.delete_by_value(543.42);
 
-        for node in list.iter() {
-            assert_ne!(*node, 543.42);
-        }
+        assert_eq!(Some(&543.42), first);
+        assert_eq!(list.len, 2);
 
-        list.delete_by_value(2.54);
+        let mut list2 = list;
 
-        for node in list.iter() {
-            assert_ne!(*node, 2.54);
-        }
+        let second = list2.delete_by_value(2.54);
+
+        assert_eq!(Some(&2.54), second);
+        assert_eq!(list2.len, 1);
+    }
+
+    #[test]
+    fn shoud_pop_back() {
+        let mut list = LinkedList::<f32>::new();
+        list.add_to_head(&543.42);
+        list.add_to_head(&2.42);
+
+        assert_eq!(Some(&543.42), list.pop_back());
+        list.pop_back();
+        assert_eq!(None, list.pop_back())
+    }
+
+    #[test]
+    fn shoud_pop_front() {
+        let mut list = LinkedList::<f32>::new();
+        list.add_to_head(&543.42);
+        list.add_to_head(&2.42);
+
+        assert_eq!(Some(&2.42), list.pop_front());
+        list.pop_front();
+        assert_eq!(None, list.pop_front())
     }
 }
