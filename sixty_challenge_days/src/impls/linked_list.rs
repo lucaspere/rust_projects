@@ -98,13 +98,47 @@ impl<'a, T: PartialEq> LinkedList<'a, T> {
 
         while let Some(head) = node.as_ref() {
             if *head.borrow().data == value {
-                return if head.borrow().back.upgrade().is_some() {
-                    self.pop_back()
-                } else {
-                    self.pop_front()
-                };
+                let head = head.borrow();
+                return head
+                    .back
+                    .upgrade()
+                    .map(|node| {
+                        node.borrow_mut().next = head.next.as_ref().map(|node| node.clone());
+                        self.len -= 1;
+                        head.data
+                    })
+                    .or_else(|| self.pop_front());
             } else {
                 node = node.and_then(|node| node.borrow().next.as_ref().map(|node| node.clone()));
+            }
+        }
+
+        None
+    }
+
+    fn delete_by_pos(&mut self, pos: usize) -> Option<&T> {
+        if self.len < pos {
+            return None;
+        }
+
+        let mut count = 0;
+        let mut node = self.head.as_ref().map(|node| node.clone());
+
+        while let Some(head) = node.as_ref() {
+            if count == pos {
+                let head = head.borrow();
+                return head
+                    .back
+                    .upgrade()
+                    .map(|node| {
+                        node.borrow_mut().next = head.next.as_ref().map(|node| node.clone());
+                        self.len -= 1;
+                        head.data
+                    })
+                    .or_else(|| self.pop_front());
+            } else {
+                node = node.and_then(|node| node.borrow().next.as_ref().map(|node| node.clone()));
+                count += 1;
             }
         }
 
@@ -190,17 +224,35 @@ mod test {
         list.add_to_head(&54.654);
         list.add_to_head(&2.54);
 
-        let first = list.delete_by_value(543.42);
+        let first = list.delete_by_value(54.654);
 
-        assert_eq!(Some(&543.42), first);
+        assert_eq!(Some(&54.654), first);
         assert_eq!(list.len, 2);
 
         let mut list2 = list;
-
         let second = list2.delete_by_value(2.54);
 
         assert_eq!(Some(&2.54), second);
         assert_eq!(list2.len, 1);
+    }
+
+    #[test]
+    fn should_delete_by_pos() {
+        let mut list = LinkedList::<f32>::new();
+        list.add_to_head(&543.42);
+        list.add_to_head(&54.654);
+        list.add_to_head(&2.54);
+
+        let first = list.delete_by_pos(1);
+
+        assert_eq!(Some(&54.654), first);
+        assert_eq!(list.len, 2);
+
+        let mut list2 = list;
+        let second = list2.delete_by_pos(5415);
+
+        assert_eq!(second, None);
+        assert_eq!(list2.len, 2);
     }
 
     #[test]
