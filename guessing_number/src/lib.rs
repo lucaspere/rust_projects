@@ -5,31 +5,38 @@
 ///! The software should exit when the player guesses the number or when they enter any value other than the number.
 use std::{
     cmp::Ordering,
-    io::{stdin, BufRead, BufReader, Error, Write},
+    io::{stdin, stdout, BufRead, BufReader, Error, Write},
 };
 
 pub struct Config {
     secret: u32,
+    reader: Option<Box<dyn BufRead>>,
+    writer: Option<Box<dyn Write>>,
 }
 
 impl Config {
-    pub fn new(secret: u32) -> Self {
-        Self { secret }
+    pub fn new(
+        secret: u32,
+        reader: Option<Box<dyn BufRead>>,
+        writer: Option<Box<dyn Write>>,
+    ) -> Self {
+        let reader = reader.or_else(|| Some(Box::new(BufReader::new(stdin()))));
+        let writer = writer.or_else(|| Some(Box::new(stdout())));
+        Self {
+            secret,
+            reader,
+            writer,
+        }
     }
-    pub fn run(&self) -> Result<(), Error> {
+
+    pub fn run(&mut self) -> Result<(), Error> {
         loop {
             println!("Please, enter a guess number");
-            let mut buf_read = BufReader::new(stdin());
-
-            let guess = Config::match_number(&mut buf_read)?;
-            let mut buf_write = Vec::new();
-            self.print_result(&mut buf_write, &guess)?;
-
-            if let Ok(result) = String::from_utf8(buf_write) {
-                println!("{result}");
-                if result == "You win 🎉!".to_string() {
-                    break Ok(());
-                }
+            let mut buf_reader = self.reader.as_mut().unwrap();
+            let guess = Config::match_number(&mut buf_reader)?;
+            let mut buf_write = self.writer.as_mut().unwrap();
+            if Config::print_result(&self.secret, &mut buf_write, &guess)? {
+                break Ok(());
             }
         }
     }
@@ -43,25 +50,28 @@ impl Config {
             .map_err(|err| Error::new(std::io::ErrorKind::Other, err))
     }
 
-    fn print_result<T: Write>(&self, output: &mut T, guess: &u32) -> Result<(), Error> {
-        match guess.cmp(&self.secret) {
+    fn print_result<T: Write>(secret: &u32, output: &mut T, guess: &u32) -> Result<bool, Error> {
+        match guess.cmp(&secret) {
             Ordering::Equal => {
-                write!(output, "You win 🎉!")
+                write!(output, "You win 🎉!\n")?;
+                Ok(true)
             }
-            Ordering::Less => write!(output, "Guess is lower"),
+            Ordering::Less => {
+                write!(output, "Guess number is lower 👇🏽\n")?;
+                Ok(false)
+            }
 
-            Ordering::Greater => write!(output, "Guess is higher"),
+            Ordering::Greater => {
+                write!(output, "Guess number is higher ☝🏽\n")?;
+                Ok(false)
+            }
         }
     }
 }
 
 #[cfg(test)]
 mod test {
-    use std::{
-        io::{Error, ErrorKind},
-        num::IntErrorKind,
-        str,
-    };
+    use std::io::ErrorKind;
 
     use crate::Config;
 
@@ -84,10 +94,10 @@ mod test {
 
     #[test]
     fn shoud_print_result() {
-        let config = Config::new(10);
+        let config = Config::new(10, None, None);
         let mut binding = vec![];
 
-        let r = config.print_result(&mut binding, &32);
+        let r = Config::print_result(&config.secret, &mut binding, &32);
         assert!(r.is_ok())
     }
 }

@@ -6,7 +6,7 @@ fn main() {
     println!("Adivinha um número");
     let secret = rand::thread_rng().gen_range(1, 1001);
 
-    if let Err(err) = Config::new(secret).run() {
+    if let Err(err) = Config::new(secret, None, None).run() {
         eprintln!("{}", err);
 
         process::exit(1)
