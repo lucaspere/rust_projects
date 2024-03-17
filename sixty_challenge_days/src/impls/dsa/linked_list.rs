@@ -3,8 +3,30 @@ use std::{
     rc::{Rc, Weak},
 };
 
+/// A [LinkedList]
+/// fdf
+///
+///
+/// fdfd
+///
+///
+///
+///
+///
+///
+///
+///
+///
+///
+///
+///
+///
+///
+///
+/// fdfd
 #[derive(Debug)]
 struct LinkedList<'a, T> {
+    cursor: usize,
     len: usize,
     head: Option<Rc<RefCell<Node<&'a T>>>>,
     tail: Option<Rc<RefCell<Node<&'a T>>>>,
@@ -21,6 +43,7 @@ struct Node<T> {
 impl<'a, T: PartialEq> LinkedList<'a, T> {
     pub fn new() -> Self {
         Self {
+            cursor: 0,
             len: 0,
             head: None,
             tail: None,
@@ -40,7 +63,7 @@ impl<'a, T: PartialEq> LinkedList<'a, T> {
                 head.borrow_mut().back = Rc::downgrade(&node.clone())
             }
 
-            node.borrow_mut().next = self.head.clone();
+            node.borrow_mut().next = self.head.as_ref().map(|node| node.clone());
 
             self.head = Some(node);
         }
@@ -73,14 +96,26 @@ impl<'a, T: PartialEq> LinkedList<'a, T> {
         }
     }
 
-    pub fn pop_front(&mut self) -> Option<&T> {
-        self.head.take().map(|node| {
-            let node = node.borrow();
-            self.head = node.next.as_ref().map(|node| node.clone());
+    pub fn clear(&mut self) {
+        self.head = None;
+        self.tail = None;
+        self.len = 0
+    }
 
-            self.len -= 1;
-            node.data
-        })
+    pub fn pop_front(&mut self) -> Option<&T> {
+        if self.len == 1 {
+            let data = self.head.take().map(|node| node.borrow().data);
+            self.clear();
+            data
+        } else {
+            self.head.take().map(|node| {
+                let node = node.borrow();
+                self.head = node.next.as_ref().map(|node| node.clone());
+
+                self.len -= 1;
+                node.data
+            })
+        }
     }
 
     pub fn pop_back(&mut self) -> Option<&T> {
@@ -94,38 +129,28 @@ impl<'a, T: PartialEq> LinkedList<'a, T> {
     }
 
     pub fn delete_by_value(&mut self, value: T) -> Option<&T> {
-        let mut node = self.head.as_ref().map(|node| node.clone());
-
-        while let Some(head) = node.as_ref() {
-            if *head.borrow().data == value {
-                let head = head.borrow();
-                return head
-                    .back
-                    .upgrade()
-                    .map(|node| {
-                        node.borrow_mut().next = head.next.as_ref().map(|node| node.clone());
-                        self.len -= 1;
-                        head.data
-                    })
-                    .or_else(|| self.pop_front());
-            } else {
-                node = node.and_then(|node| node.borrow().next.as_ref().map(|node| node.clone()));
-            }
-        }
-
-        None
+        self.delete_by_predicate(|node| *node.data == value)
     }
 
     fn delete_by_pos(&mut self, pos: usize) -> Option<&T> {
         if self.len < pos {
             return None;
         }
-
         let mut count = 0;
+        self.delete_by_predicate(|_| {
+            count += 1;
+            count == pos
+        })
+    }
+
+    pub fn delete_by_predicate<F>(&mut self, mut predicate: F) -> Option<&T>
+    where
+        F: FnMut(&Node<&'a T>) -> bool,
+    {
         let mut node = self.head.as_ref().map(|node| node.clone());
 
         while let Some(head) = node.as_ref() {
-            if count == pos {
+            if predicate(&*head.as_ref().borrow()) {
                 let head = head.borrow();
                 return head
                     .back
@@ -138,23 +163,12 @@ impl<'a, T: PartialEq> LinkedList<'a, T> {
                     .or_else(|| self.pop_front());
             } else {
                 node = node.and_then(|node| node.borrow().next.as_ref().map(|node| node.clone()));
-                count += 1;
             }
         }
 
         None
     }
 }
-
-// impl<'a, T> IntoIterator for LinkedList<'a, T> {
-//     type Item = &'a T;
-
-//     type IntoIter = LinkedListIterator<'a, T>;
-
-//     fn into_iter(self) -> Self::IntoIter {
-//         self.iter()
-//     }
-// }
 
 struct LinkedListIterator<'a, T> {
     data: Weak<RefCell<Node<&'a T>>>,
@@ -181,11 +195,7 @@ impl<'a, T> Iterator for LinkedListIterator<'a, T> {
 #[cfg(test)]
 mod test {
 
-    use super::{LinkedList, Node};
-    use std::{
-        cell::RefCell,
-        rc::{Rc, Weak},
-    };
+    use super::LinkedList;
 
     #[test]
     fn should_compute_the_len_of_the_list() {

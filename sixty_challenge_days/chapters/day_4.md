@@ -1,9 +1,6 @@
 # Day 4: Build a (Basic) Linked List - 25-02-2024
 
-## Exercises
-hat's the spirit! Here's the plan for Day 4, where we'll turn the concepts from yesterday into working Rust code.
-
-Objective: Build a (Basic) Linked List
+## Exercises: Build a (Basic) Linked List
 
 **Recap: We'll briefly review:**
 - The mental model of nodes, data, and pointers.

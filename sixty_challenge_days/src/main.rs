@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use std::{collections::LinkedList, io::Error, mem::size_of_val, path::Path};
 
 use impls::file::File;
