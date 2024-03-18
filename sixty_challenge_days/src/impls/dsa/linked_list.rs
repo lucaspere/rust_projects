@@ -3,41 +3,12 @@ use std::{
     rc::{Rc, Weak},
 };
 
-/// A [LinkedList]
-/// fdf
-///
-///
-/// fdfd
-///
-///
-///
-///
-///
-///
-///
-///
-///
-///
-///
-///
-///
-///
-///
-/// fdfd
 #[derive(Debug)]
 struct LinkedList<'a, T> {
     cursor: usize,
     len: usize,
     head: Option<Rc<RefCell<Node<&'a T>>>>,
     tail: Option<Rc<RefCell<Node<&'a T>>>>,
-}
-
-/// A node represents the data and the next [Node] to point in the next.
-#[derive(Debug)]
-struct Node<T> {
-    data: T,
-    next: Option<Rc<RefCell<Node<T>>>>,
-    back: Weak<RefCell<Node<T>>>,
 }
 
 impl<'a, T: PartialEq> LinkedList<'a, T> {
@@ -50,10 +21,12 @@ impl<'a, T: PartialEq> LinkedList<'a, T> {
         }
     }
     pub fn add_to_head(&mut self, data: &'a T) {
+        self.len += 1;
         let node = Rc::new(RefCell::new(Node {
             data,
             next: None,
             back: Weak::new(),
+            index: 1,
         }));
         if self.head.is_none() {
             self.head = Some(node.clone());
@@ -66,15 +39,23 @@ impl<'a, T: PartialEq> LinkedList<'a, T> {
             node.borrow_mut().next = self.head.as_ref().map(|node| node.clone());
 
             self.head = Some(node);
+            self.update_index_from_head()
         }
-
-        self.len += 1;
     }
+
+    fn update_index_from_head(&mut self) {
+        if let Some(head) = self.head.as_mut() {
+            head.borrow_mut().update_index_forward()
+        }
+    }
+
     pub fn add_to_tail(&mut self, data: &'a T) {
+        self.len += 1;
         let node = Rc::new(RefCell::new(Node {
             data,
             next: None,
             back: Weak::new(),
+            index: self.len,
         }));
         if let Some(curr_node) = self.tail.as_mut() {
             node.borrow_mut().back = Rc::downgrade(&curr_node.clone());
@@ -84,8 +65,6 @@ impl<'a, T: PartialEq> LinkedList<'a, T> {
             self.tail = Some(node.clone());
             self.head = Some(node.clone());
         }
-
-        self.len += 1;
     }
 
     pub fn iter(&self) -> LinkedListIterator<'a, T> {
@@ -93,6 +72,14 @@ impl<'a, T: PartialEq> LinkedList<'a, T> {
             LinkedListIterator::new(Rc::downgrade(head))
         } else {
             LinkedListIterator::new(Weak::new())
+        }
+    }
+
+    pub fn iter_mut(&self) -> LinkedListMutIterator<'a, T> {
+        if let Some(head) = &self.head {
+            LinkedListMutIterator::new(Rc::downgrade(head))
+        } else {
+            LinkedListMutIterator::new(Weak::new())
         }
     }
 
@@ -112,6 +99,7 @@ impl<'a, T: PartialEq> LinkedList<'a, T> {
                 let node = node.borrow();
                 self.head = node.next.as_ref().map(|node| node.clone());
 
+                self.iter_mut().for_each(|t| t.data = node.data);
                 self.len -= 1;
                 node.data
             })
@@ -136,10 +124,10 @@ impl<'a, T: PartialEq> LinkedList<'a, T> {
         if self.len < pos {
             return None;
         }
-        let mut count = 0;
+        let mut counter = 0;
         self.delete_by_predicate(|_| {
-            count += 1;
-            count == pos
+            counter += 1;
+            counter == pos
         })
     }
 
@@ -158,6 +146,7 @@ impl<'a, T: PartialEq> LinkedList<'a, T> {
                     .map(|node| {
                         node.borrow_mut().next = head.next.as_ref().map(|node| node.clone());
                         self.len -= 1;
+                        node.borrow_mut().update_index_forward();
                         head.data
                     })
                     .or_else(|| self.pop_front());
@@ -189,6 +178,61 @@ impl<'a, T> Iterator for LinkedListIterator<'a, T> {
                 node.borrow().data
             })
         })
+    }
+}
+
+struct LinkedListMutIterator<'a, T> {
+    data: Weak<RefCell<Node<&'a T>>>,
+    cursor: usize,
+}
+
+impl<'a, T> LinkedListMutIterator<'a, T> {
+    pub fn new(data: Weak<RefCell<Node<&'a T>>>) -> Self {
+        Self { data, cursor: 0 }
+    }
+}
+impl<'a, T> Iterator for LinkedListMutIterator<'a, T> {
+    type Item = &'a mut Node<&'a T>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.data.upgrade().map(|node| {
+            self.data = node
+                .borrow()
+                .next
+                .as_ref()
+                .map(|node| Rc::downgrade(node))
+                .unwrap_or(Weak::new());
+
+            let ptr = node.as_ptr();
+
+            unsafe { &mut *ptr }
+        })
+    }
+}
+
+/// A node represents the data and the next [Node] to point in the next.
+#[derive(Debug)]
+struct Node<T> {
+    data: T,
+    next: Option<Rc<RefCell<Node<T>>>>,
+    back: Weak<RefCell<Node<T>>>,
+    index: usize,
+}
+
+impl<T> Node<T> {
+    fn update_index_backward(&mut self) {
+        while let Some(node) = self.next.as_mut() {
+            node.borrow_mut().index -= 1;
+        }
+    }
+
+    fn update_index_forward(&mut self) {
+        let mut temp = self.next.as_ref().map(|node| node.clone());
+
+        while let Some(node) = temp.as_ref() {
+            node.borrow_mut().index += 1;
+            temp = temp.and_then(|node| node.borrow_mut().next.as_mut().map(|node| node.clone()));
+        }
     }
 }
 
@@ -285,5 +329,17 @@ mod test {
         assert_eq!(Some(&2.42), list.pop_front());
         list.pop_front();
         assert_eq!(None, list.pop_front())
+    }
+
+    #[test]
+    fn should_count_index_position() {
+        let mut list = LinkedList::<f32>::new();
+        list.add_to_head(&543.42);
+        list.add_to_head(&2.42);
+        list.add_to_head(&2545.2);
+
+        for (idx, node) in list.iter_mut().enumerate() {
+            assert_eq!(idx + 1, node.index)
+        }
     }
 }
