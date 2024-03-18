@@ -67,6 +67,33 @@ impl<'a, T: PartialEq> LinkedList<'a, T> {
         }
     }
 
+    pub fn insert_after(&mut self, value: T, new_data: &'a T) {
+        let mut node = self.head.as_ref().map(|node| node.clone());
+
+        while let Some(head) = node.as_ref() {
+            if *head.borrow().data == value {
+                let new_node = Rc::new(RefCell::new(Node {
+                    data: new_data,
+                    next: head.borrow().next.clone(),
+                    back: Rc::downgrade(head),
+                    index: head.borrow().index + 1,
+                }));
+
+                if let Some(next_node) = &new_node.borrow().next {
+                    next_node.borrow_mut().back = Rc::downgrade(&new_node);
+                }
+
+                head.borrow_mut().next = Some(new_node.clone());
+                self.len += 1;
+                new_node.borrow_mut().update_index_forward();
+
+                return;
+            } else {
+                node = node.and_then(|node| node.borrow().next.as_ref().map(|node| node.clone()));
+            }
+        }
+    }
+
     pub fn iter(&self) -> LinkedListIterator<'a, T> {
         if let Some(head) = &self.head {
             LinkedListIterator::new(Rc::downgrade(head))
