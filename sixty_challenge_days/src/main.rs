@@ -1,15 +1,13 @@
 #![allow(dead_code)]
+#![deny(soft_unstable)]
+#![feature(asm)]
 
 use std::{collections::LinkedList, io::Error, mem::size_of_val, path::Path};
 
-use impls::file::File;
-
-use crate::impls::{
-    product::{OrderStatus, Product},
-    rectangles::area_tuple,
+use sixty_challenge_days::impls::{
+    file::File,
+    product::{OrderStatus, Product, ProductCategory},
 };
-
-mod impls;
 
 fn main() -> Result<(), Error> {
     let day_1_path = Path::new("day-1.md");
@@ -19,12 +17,6 @@ fn main() -> Result<(), Error> {
     let width1 = 30;
     let height1 = 50;
     let dimensions = (width1, height1);
-    println!(
-        "The area of the rectangle is {} square pixels. With Tuples {}",
-        impls::rectangles::area(width1, height1),
-        area_tuple(dimensions)
-    );
-
     let mut order = OrderStatus::Pending;
 
     println!("{:?}", order);
@@ -34,7 +26,7 @@ fn main() -> Result<(), Error> {
     let mut product = Product::new(
         "Computer".to_string(),
         1250.00,
-        impls::product::ProductCategory::Electronics,
+        ProductCategory::Electronics,
     );
 
     product.display_product();

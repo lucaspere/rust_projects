@@ -7,3 +7,9 @@ edition = "2021"
 
 [dependencies]
 criterion = "0.5.1"
+rand = "0.8"
+lazy_static = "1.4.0"
+
+[[bench]]
+name = ""
+harness = false

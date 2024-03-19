@@ -1,4 +1,4 @@
-use std::{array, collections::LinkedList};
+use std::collections::LinkedList;
 
 pub struct AHash {
     table: [(u32, LinkedList<(String, i32)>); 27],

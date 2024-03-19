@@ -60,6 +60,32 @@ pub fn rotate_slice<T: Rotate>(slice: &mut [T], mid: usize) {
     }
 }
 
+pub fn insertion_sort<T: PartialOrd>(slice: &mut [T]) {
+    let outer_loop = 0..slice.len();
+    for i in outer_loop {
+        let inner_loop = (1 + i)..slice.len();
+        for j in inner_loop {
+            if slice[i] < slice[j] {
+                slice.swap(i, j);
+                break;
+            }
+        }
+    }
+}
+
+pub fn insertion_sort_optimization<T: PartialOrd + Copy>(slice: &mut [T]) {
+    for i in 1..slice.len() {
+        let key = slice[i];
+        let mut j = i;
+
+        while j > 0 && key < slice[j - 1] {
+            slice[i] = slice[j - 1];
+            j -= 1;
+        }
+        slice[j] = key
+    }
+}
+
 pub trait Rotate: Clone + Copy {}
 
 #[cfg(test)]
@@ -88,5 +114,14 @@ mod tests {
 
         rotate_by_juggling(&mut array, 2);
         assert_eq!(array, [3, 4, 5, 1, 2])
+    }
+
+    #[test]
+    fn should_sort_data() {
+        let mut data = [34i32, 25, 51, 1, 4, 5, 99, 105];
+        // [25, 34]
+        // [25, 34, 51]
+        insertion_sort_optimization(&mut data);
+        println!("{:?}", data);
     }
 }
