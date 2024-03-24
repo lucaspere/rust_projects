@@ -4,7 +4,7 @@
 
 ### Focus Areas
 #### Iterator Refinement
-I tried to refactor the ``next`` implementation to allow to iterate without consuming the list, but the compiler accused an error: "mismatched types expected enum `Option<Box<Node<T>>>` found mutable reference `&mut Option<Box<Node<T>>>`"
+I tried to refactor the ``next`` implementation to allow iterating without consuming the list, but the compiler accused an error: "mismatched types expected enum `Option<Box<Node<T>>>` found mutable reference `&mut Option<Box<Node<T>>>`"
 ```rs
 impl<'a, T: 'a> Iterator for &'a LinkedList<T> {
     type Item = &'a T;

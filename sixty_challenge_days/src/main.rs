@@ -10,9 +10,24 @@ use sixty_challenge_days::impls::{
 };
 
 fn main() -> Result<(), Error> {
-    let day_1_path = Path::new("day-1.md");
-    let file = File::open_file(day_1_path)?;
-    file.print_file();
+    // let day_1_path = Path::new("day-1.md");
+    // let file = File::open_file(day_1_path)?;
+    // file.print_file();
+
+    let y = {
+        let mut x = [1, 2, 3, 4, 5];
+        let mid = 2;
+        let len = x.len();
+        for _ in 0..mid {
+            let temp = x[0];
+            x.copy_within(1..len, 0);
+
+            x[len - 1] = temp;
+        }
+
+        x
+    };
+    println!("{y:?}");
 
     let width1 = 30;
     let height1 = 50;

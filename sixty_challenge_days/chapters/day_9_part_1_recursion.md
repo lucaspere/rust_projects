@@ -1,13 +1,13 @@
 # Day 9 - Part 1: Recursion
 
 ## Recursion
-It is a technique to solve problems by calling a function itself till reach a point that it knows how to solve. For example, a reverse string can be solved by calling a function (f) that if the string's length (n) is 0 or 1 return it, otherwise return the f(str[1..]) + str[0].
+It is a technique to solve problems by calling the function itself until reach a breaking point. For example, a reverse string can be solved by calling a function (f) that if the string's length (n) is 0 or 1 return it, otherwise return the f(str[1..]) + str[0].
 
 ## Use cases
 Recursion is perfect for tree-like algorithms because its flow data naturally. Tree-like algorithms normally needs to perform the same procedure until reach the point to be solved. Mostly fastest algorihtms and data structure uses recursive: quicksort, mergesort, tree transverse, btree.
 
 ## How it works
-To allow recursion, the compiler must save each function call context in a *call stack*. The call stack save the context of the function and push again to the top of stack. When the function reaches the final point, the compiler pops the function and return it to the function caller. Since it will be pushing function calls to the stack until the function return a value, it can cause infinite loop if the function does not have a stop flag.
+To allow recursion, the compiler must save each function call context in a *call stack*. The call stack save the context of the function and push again to the top of stack. When the function reaches the final point, the compiler pops the function and return it to the function caller. Since it will be pushing function calls to the stack until the function return a value, it can cause **infinite loop** if the function does not have a stop flag.
 
 ### Illustration of reverse_str_rec stack call push and unwind
 ```
@@ -105,12 +105,16 @@ fn fibonnaci(n: u32) -> u64 {
     }
 }
 
-fn fibonnaci_bottom_up(n: u32) -> u64 {
-    if n == 2 || n == 1 {
-        1
-    } else {
-        fibonnaci(n - 1) + fibonnaci(n - 2)
-    }
+fn (n: u32) -> u64 {
+    let mut cache: HashMap::with_capacity(n);
+
+    move || *cache.entry(n).or_insert_with(|| {
+        if n == 2 || n == 1 {
+            1
+        } else {
+            fibonnaci(n - 1) + fibonnaci(n - 2)
+        }
+    })
 }
 
 #[cfg(test)]
@@ -132,11 +136,20 @@ mod tests {
         assert_eq!(fibonnaci(5), 5);
         assert_eq!(fibonnaci(10), 55);
     }
+
+     #[test]
+    fn test_fibonnaci_mem() {
+        assert_eq!(fibonnaci_mem()(1), 1);
+        assert_eq!(fibonnaci_mem()(2), 1);
+        assert_eq!(fibonnaci_mem()(5), 5);
+        assert_eq!(fibonnaci_mem()(10), 55);
+    }
 }
 ```
 
 ## References
 1. Bhargava, Aditya; Grokking Algorithms 2ed. Chapter 3: Recursion.
 2. Sweigart, Al; The Recursive Book of Recursion 1ed. Chapter 7: Memoization and Dynamic.
-3. https://www.geeksforgeeks.org/introduction-to-recursion-data-structure-and-algorithm-tutorials/?ref=lbp
-4. https://www.youtube.com/watch?v=oBt53YbR9Kk
+3. Bottom-Up and Top-Down Recursion Explained by @PatrickKarsh. March 20, 2024. https://link.medium.com/0MF6yrty7Hb
+4. Introduction to Recursion - Data Structure and Algorithm Tutorials - GeeksforGeeks. March 20, 2024. https://www.geeksforgeeks.org/introduction-to-recursion-data-structure-and-algorithm-tutorials/?ref=lbp
+5. “Dynamic Programming - Learn to Solve Algorithmic Problems & Coding Challenges” YouTube video. March 20, 2024. https://www.youtube.com/watch?v=oBt53YbR9Kk
