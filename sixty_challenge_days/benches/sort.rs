@@ -3,8 +3,8 @@ use std::time::Duration;
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use rand::Rng;
 use sixty_challenge_days::impls::dsa::sort::{
-    insertion_sort, insertion_sort_optimization, quick_sort_hoare, quick_sort_middle_three,
-    quick_sort_random, quick_sort_with_custom_part,
+    bubble_sort, insertion_sort, insertion_sort_optimization, quick_sort_hoare,
+    quick_sort_middle_three, quick_sort_random, quick_sort_with_custom_part, selection_sort,
 };
 
 #[inline]
@@ -118,10 +118,42 @@ pub fn insert_and_quick_sort(c: &mut Criterion) {
     sort_group.finish();
 }
 
+pub fn sort_algorithms(c: &mut Criterion) {
+    let mut array: Vec<u32> = create_array(false, true);
+    let mut sort_group = c.benchmark_group("Sort Algorithms Randomly Smaples");
+    sort_group.bench_function("insert_sort ", |b| {
+        b.iter(|| {
+            insertion_sort_optimization(black_box(&mut array));
+        });
+    });
+
+    sort_group.bench_function("quick_sort", |b| {
+        b.iter(|| {
+            quick_sort_with_custom_part(black_box(&mut array), &|size| {
+                (0 + size.div_ceil(2) + size - 1).div_ceil(3)
+            });
+        });
+    });
+
+    sort_group.bench_function("bubble_sort", |b| {
+        b.iter(|| {
+            bubble_sort(black_box(&mut array));
+        });
+    });
+
+    sort_group.bench_function("selection_sort", |b| {
+        b.iter(|| {
+            selection_sort(black_box(&mut array));
+        });
+    });
+
+    sort_group.finish();
+}
+
 criterion_group!(
     name = benches;
     config = custom_criterion();
-    targets = insertion_sort_average_case, insertion_sort_worst_case
+    targets = insertion_sort_average_case, insertion_sort_worst_case, sort_algorithms
 );
 
 criterion_main!(benches);

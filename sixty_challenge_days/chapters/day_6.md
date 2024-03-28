@@ -1,4 +1,4 @@
-# Day 6: Beyond the basic of Linked List - 25-02-2024
+# Day 6: Building a simple File Format - 25-02-2024
 
 ## Scenario: A Simple File Format
 Building a basic config/setting file parser. The format will be intentionally simplified:

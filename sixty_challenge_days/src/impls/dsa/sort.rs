@@ -144,10 +144,44 @@ where
         slice.swap(start, end)
     }
 }
+
+pub fn bubble_sort<T: PartialOrd + Copy>(slice: &mut [T]) {
+    let len = slice.len();
+    for i in 0..len {
+        let mut swapped = false;
+        for j in 1..len - i {
+            if slice[j - 1] > slice[j] {
+                slice.swap(j - 1, j);
+                swapped = true
+            }
+        }
+
+        if !swapped {
+            break;
+        }
+    }
+}
+
+pub fn selection_sort<T: PartialOrd + Copy>(slice: &mut [T]) {
+    let len = slice.len();
+    for i in 0..len {
+        let mut min_index = i;
+        for j in (i + 1)..len {
+            if slice[j] < slice[min_index] {
+                min_index = j;
+            }
+        }
+        if min_index != i {
+            slice.swap(i, min_index);
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
     use crate::impls::dsa::sort::{
-        insertion_sort, insertion_sort_optimization, quick_sort_hoare, quick_sort_with_custom_part,
+        bubble_sort, insertion_sort, insertion_sort_optimization, quick_sort_hoare,
+        quick_sort_with_custom_part, selection_sort,
     };
 
     #[test]
@@ -182,6 +216,20 @@ mod test {
     fn test_quick_sort_with_custom_strategy() {
         let mut data = [34i32, 25, 51, 1, 4, 5, 106, 105];
         quick_sort_with_custom_part(&mut data, &|len| len - 1);
+        assert_eq!(data, [1, 4, 5, 25, 34, 51, 105, 106]);
+    }
+
+    #[test]
+    fn test_bubble_sort() {
+        let mut data = [34i32, 25, 51, 1, 4, 5, 106, 105];
+        bubble_sort(&mut data);
+        assert_eq!(data, [1, 4, 5, 25, 34, 51, 105, 106]);
+    }
+
+    #[test]
+    fn test_selection_sort() {
+        let mut data = [34i32, 25, 51, 1, 4, 5, 106, 105];
+        selection_sort(&mut data);
         assert_eq!(data, [1, 4, 5, 25, 34, 51, 105, 106]);
     }
 }

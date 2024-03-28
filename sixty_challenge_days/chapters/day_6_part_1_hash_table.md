@@ -1,4 +1,4 @@
-# Day 6 Extended: Hash Tables - 25-02-2024
+# Day 6: Part 1 - Hash Tables - 25-02-2024
 
 ### Exercise 1 - Explain Hash Tables
 

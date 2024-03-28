@@ -27,7 +27,7 @@ fn lomuto_partition<T: PartialOrd>(slice: &mut [T]) -> usize {
 ```
 * Time Complexity: O(n^2) 
 * Auxiliary Space: O(1)
-#### Hore
+#### Hoare
 works by initializing two indexes that start at two ends, the two indexes move toward each other until an inversion is (A smaller value on the left side and greater value on the right side) found. When an inversion is found, two values are swapped and the process is repeated.
 ```rs
 fn hoare_partition<T: PartialOrd>(slice: &mut [T]) -> usize {
@@ -87,5 +87,5 @@ pub fn quick_sort_middle_three<T: PartialOrd + Copy>(slice: &mut [T]) {
 ## References
 1. Bhargava, Aditya; Grokking Algorithms 2ed. Chapter 4: Quicksort.
 2. Sweigart, Al; The Recursive Book of Recursion 1ed. Chapter 6: Divide-and-Conquer Algorithms.
-https://www.geeksforgeeks.org/hoares-vs-lomuto-partition-scheme-quicksort/
-https://www.geeksforgeeks.org/quick-sort/
+3. https://www.geeksforgeeks.org/hoares-vs-lomuto-partition-scheme-quicksort/
+4. https://www.geeksforgeeks.org/quick-sort/
