@@ -177,10 +177,49 @@ pub fn selection_sort<T: PartialOrd + Copy>(slice: &mut [T]) {
     }
 }
 
+pub fn merge_sort<T: PartialOrd + Copy>(slices: &mut [T]) {
+    if slices.len() > 1 {
+        if slices.len() == 2 && slices[0] > slices[1] {
+            slices.swap(0, 1)
+        } else {
+            let len = slices.len();
+            let mid = len / 2;
+            let (right, left) = slices.split_at_mut(mid);
+            merge_sort(right);
+            merge_sort(left);
+
+            let aux_array = merge(right, left);
+            slices.copy_from_slice(&aux_array.as_slice());
+        }
+    }
+}
+
+fn merge<T: PartialOrd + Copy>(left: &mut [T], right: &mut [T]) -> Vec<T> {
+    let mut aux = Vec::with_capacity(left.len() * 2);
+    let mut ileft = 0;
+    let mut iright = 0;
+
+    while aux.len() < (left.len() + right.len()) {
+        if left[ileft] < right[iright] {
+            aux.push(left[ileft]);
+            ileft += 1;
+        } else {
+            aux.push(right[iright]);
+            iright += 1;
+        }
+        if ileft == left.len() {
+            aux.extend_from_slice(&right[iright..right.len()])
+        } else if iright == right.len() {
+            aux.extend_from_slice(&&left[ileft..left.len()])
+        }
+    }
+
+    aux
+}
 #[cfg(test)]
 mod test {
     use crate::impls::dsa::sort::{
-        bubble_sort, insertion_sort, insertion_sort_optimization, quick_sort_hoare,
+        bubble_sort, insertion_sort, insertion_sort_optimization, merge_sort, quick_sort_hoare,
         quick_sort_with_custom_part, selection_sort,
     };
 
@@ -230,6 +269,12 @@ mod test {
     fn test_selection_sort() {
         let mut data = [34i32, 25, 51, 1, 4, 5, 106, 105];
         selection_sort(&mut data);
+        assert_eq!(data, [1, 4, 5, 25, 34, 51, 105, 106]);
+    }
+    #[test]
+    fn test_merge_sort() {
+        let mut data = [34i32, 25, 51, 1, 4, 5, 106, 105];
+        merge_sort(&mut data);
         assert_eq!(data, [1, 4, 5, 25, 34, 51, 105, 106]);
     }
 }

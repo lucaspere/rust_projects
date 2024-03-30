@@ -3,7 +3,7 @@ use std::time::Duration;
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use rand::Rng;
 use sixty_challenge_days::impls::dsa::sort::{
-    bubble_sort, insertion_sort, insertion_sort_optimization, quick_sort_hoare,
+    bubble_sort, insertion_sort, insertion_sort_optimization, merge_sort, quick_sort_hoare,
     quick_sort_middle_three, quick_sort_random, quick_sort_with_custom_part, selection_sort,
 };
 
@@ -12,7 +12,7 @@ fn create_array(shuffled: bool, random: bool) -> Vec<u32> {
     use rand::seq::SliceRandom;
     use rand::thread_rng;
 
-    const ARRAY_SIZE: usize = 5000;
+    const ARRAY_SIZE: usize = 7500;
     const SWAPS: usize = 1000;
 
     let mut rng = thread_rng();
@@ -147,13 +147,19 @@ pub fn sort_algorithms(c: &mut Criterion) {
         });
     });
 
+    sort_group.bench_function("merge_sort", |b| {
+        b.iter(|| {
+            merge_sort(black_box(&mut array));
+        });
+    });
+
     sort_group.finish();
 }
 
 criterion_group!(
     name = benches;
     config = custom_criterion();
-    targets = insertion_sort_average_case, insertion_sort_worst_case, sort_algorithms
+    targets = sort_algorithms
 );
 
 criterion_main!(benches);

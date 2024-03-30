@@ -12,3 +12,4 @@
 - [Day 9 - Part 1: Recursion](./day_9_part_1_recursion.md)
 - [Day 9 - Part 2: Quick Sort](./day_9_part_2_quick_sort.md)
 - [Day 10 - Part 1: Bubble Sort and Selection Sort](./day_10_part_1_bubble_and_selection_sort.md)
+- [Day 10 - Part 2: Merge Sort](./day_10_part_2_merge_sort.md)
