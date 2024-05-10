@@ -1,4 +1,4 @@
-# Day 9 - Part 1: Recursion
+# Day 9 - Part 1: Recursion - 19-03-2024
 
 ## Recursion
 It is a technique to solve problems by calling the function itself until reach a breaking point. For example, a reverse string can be solved by calling a function (f) that if the string's length (n) is 0 or 1 return it, otherwise return the f(str[1..]) + str[0].

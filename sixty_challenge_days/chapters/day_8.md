@@ -1,4 +1,4 @@
-# Day 8: Improvements Linked List & Arrays:
+# Day 8: Improvements Linked List & Arrays - 23-03-2024
 
 Absolutely! I'll aim to provide exercises that complement your learning from "Grokking Algorithms" and push your Rust skills.
 

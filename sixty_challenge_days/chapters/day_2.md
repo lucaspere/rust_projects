@@ -51,7 +51,7 @@ Your Explanation: In your own words, explain these concepts to me:
 
 #### Things to Ponder
 ##### Memory Layout:
-No, it sizes not increased! That because Rust compile knows the size of Struct and allocate a portion of memory for it. So even we did not assign some value to struct's fields, the size of struct remains the same. It's like a bank safe, event though it doesn't contain value, the size is the same.
+No, it sizes hasn't increased! That because Rust compile knows the size of Struct and allocate a portion of memory for it. So even we've not assigned some value to struct's fields, the size of struct remains the same. It's like a bank safe, event though it doesn't contain value, the size is the same.
 I wrote a function to validate that.
 ```rs
  fn when_add_value_in_struct_its_size_increase() {

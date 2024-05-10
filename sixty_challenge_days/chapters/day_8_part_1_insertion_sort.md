@@ -1,4 +1,4 @@
-# Day 8 - Part 1: Insertion Sort
+# Day 8 - Part 1: Insertion Sort - 23-03-2024
 
 ## Introduction
 Insertion Sort is a stable In-place linear algorithm that sorting by putting a value in your correct position for each iteraction. For each value, it analyzes the value with the subsequents values, switting the position with correspondict value. For that reason, the time complexity is O(n^2) on the worst and average cases. On the best case, it has O(n) time Complexity. Since is In-place, the space complexity is constant O(1), because it not uses some extra spacing to sort the data, it only uses a reference of values.

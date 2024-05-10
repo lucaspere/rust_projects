@@ -37,7 +37,7 @@ Your Explanation: In your own words, explain these concepts to me:
 
 ### Understanding Ownership
 
-Ownership is an important technique to guarantee safe memory management in the Rust language. It prevents **_double free_** by the rule of dropping a value in final of its scope. Another bug is **_data race_** which occurs when two variables can mutate the same value. Ownership prevents this by not allowing two variables carrying multiple mutable references to the same value. The rule is: that one immutable value can have multiple references, but a mutable value can only have one mutable reference. Ownership also prevents the bug **_Dangling references_** at compile time checking if a variable is trying to get a reference from a value that has already dropped. The GC in JavaScript handles this automatically in the background by checking periodically if a variable is referenced by any others.
+Ownership is an important technique to guarantee safe memory management in the Rust language. It prevents **_double free_** by the rule of dropping a value at final of its scope. Also, it avoids **_data race_** bug that occurs when two variables mutates the same value. Ownership prevents that by not allowing two variables carries multiple mutable references to the same value. The rule is: one immutable value can have multiple references, but a mutable value can only have one mutable reference. Ownership also prevents the bug **_Dangling references_** at compile time checking if a variable is trying to get a reference from a value that has already dropped. The GC in JavaScript handles this automatically in the background by checking periodically if a variable is referenced by any others.
 
 
 ### Exercise 1: Transfer of Ownership

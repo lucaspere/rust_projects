@@ -210,7 +210,7 @@ fn merge<T: PartialOrd + Copy>(left: &mut [T], right: &mut [T]) -> Vec<T> {
         if ileft == left.len() {
             aux.extend_from_slice(&right[iright..right.len()])
         } else if iright == right.len() {
-            aux.extend_from_slice(&&left[ileft..left.len()])
+            aux.extend_from_slice(&left[ileft..left.len()])
         }
     }
 
