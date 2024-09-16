@@ -1,3 +1,4 @@
+pub mod concurrency;
 pub mod dsa;
 pub mod file;
 pub mod library;
