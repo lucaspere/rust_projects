@@ -1,6 +1,7 @@
+use core::num;
 use std::{
     ops::Deref,
-    sync::{Arc, Mutex},
+    sync::{Arc, Mutex, RwLock},
     thread::{self, sleep},
     time::Duration,
 };
@@ -86,6 +87,40 @@ pub fn shared_owned() {
     b_thread.join().unwrap();
 }
 
+pub fn mul_read_one_write() {
+    let numbers = vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+    let data = Arc::new(RwLock::new(numbers));
+
+    let a_thread = thread::spawn({
+        let data = data.clone();
+        move || {
+            let mut data = data.write().unwrap();
+            data.push(11);
+            println!("Hello from a thread! The number is: {:#?}", data);
+        }
+    });
+
+    let b_thread = thread::spawn({
+        let data = data.clone();
+        move || {
+            let data = data.read().unwrap();
+            println!("Hello from another thread! The number is: {:#?}", data);
+        }
+    });
+
+    let c_thread = thread::spawn({
+        let data = data.clone();
+        move || {
+            let mut data = data.write().unwrap();
+            data.push(12);
+            println!("Hello from another thread! The number is: {:#?}", data);
+        }
+    });
+
+    a_thread.join().unwrap();
+    b_thread.join().unwrap();
+    c_thread.join().unwrap();
+}
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -103,5 +138,10 @@ mod tests {
     #[test]
     fn test_shared_owned() {
         shared_owned();
+    }
+
+    #[test]
+    fn test_mul_read_one_write() {
+        mul_read_one_write();
     }
 }
