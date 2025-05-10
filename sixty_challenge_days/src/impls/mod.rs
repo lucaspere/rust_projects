@@ -1,3 +1,4 @@
+pub mod basic_algorithm;
 pub mod concurrency;
 pub mod dsa;
 pub mod file;

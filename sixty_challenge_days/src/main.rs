@@ -1,8 +1,9 @@
 #![allow(dead_code)]
 #![deny(soft_unstable)]
 #![feature(asm)]
+#![feature(deadline_api)]
 
-use std::{collections::LinkedList, io::Error, mem::size_of_val, path::Path};
+use std::{collections::LinkedList, future, io::Error, mem::size_of_val, path::Path, thread};
 
 use sixty_challenge_days::impls::{
     file::File,
@@ -13,7 +14,13 @@ fn main() -> Result<(), Error> {
     // let day_1_path = Path::new("day-1.md");
     // let file = File::open_file(day_1_path)?;
     // file.print_file();
+    let sub_thr = thread::spawn(|| {
+        let id = thread::current().id();
+        println!("Hello from the sub thread, my ID is: {id:#?}");
+    });
 
+    let id = thread::current().id();
+    println!("Hello from the main thread, my ID is: {id:#?}");
     let y = {
         let mut x = [1, 2, 3, 4, 5];
         let mid = 2;

@@ -89,7 +89,6 @@ fn search_case_insensitive<'a>(query: &str, contents: &'a str) -> Vec<&'a str> {
         .collect()
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;

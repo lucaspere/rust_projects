@@ -1,5 +1,5 @@
 /// [Reversal algorithm for Array rotation](https://www.geeksforgeeks.org/program-for-array-rotation-continued-reversal-algorithm/)
-/// Strategy that rotate a array by split it into two subarrays and reverse each one,
+/// strategy that rotate a array by split it into two subarrays and reverse each one,
 /// then brings together and do the final reverse.
 pub fn rotate_3_way_reverses<T>(slice: &mut [T], mid: usize) {
     if mid < slice.len() {
@@ -10,8 +10,8 @@ pub fn rotate_3_way_reverses<T>(slice: &mut [T], mid: usize) {
     }
 }
 
-/// [Juggling Algorithm(https://www.geeksforgeeks.org/array-rotation/)
-/// Rotates by loop sets using a GCD (Greatest Common Divisor) to determined the amount of sets to use
+/// [Juggling Algorithm](https://www.geeksforgeeks.org/array-rotation/)
+/// rotates by loop sets using a GCD (Greatest Common Divisor) to determined the amount of sets to use
 pub fn rotate_left<T: Copy>(slice: &mut [T], mid: usize) {
     if mid < slice.len() {
         let len = slice.len();
@@ -24,8 +24,8 @@ pub fn rotate_left<T: Copy>(slice: &mut [T], mid: usize) {
     }
 }
 
-/// [Rotate one by one(https://www.geeksforgeeks.org/array-rotation/)
-/// Rotates by loop sets using a GCD (Greatest Common Divisor) to determined the amount of sets to use
+/// [Rotate one by one](https://www.geeksforgeeks.org/array-rotation/)
+/// rotates by loop sets using a GCD (Greatest Common Divisor) to determined the amount of sets to use
 pub fn rotate_by_juggling<T: Copy>(slice: &mut [T], mid: usize) {
     let cycles = gcd(slice.len(), mid);
     let mut i = 0;
