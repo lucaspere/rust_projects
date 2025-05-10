@@ -31,9 +31,15 @@ impl TryFrom<&str> for SettingValue {
     /// ```
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         match value {
-            _ if let Ok(parsed_int) = SettingValue::convert_to_valid_type::<i32>(value) => Ok(SettingValue::Number(parsed_int)),
-            _ if let Ok(parsed_bool) = SettingValue::convert_to_valid_type::<bool>(value) => Ok(SettingValue::Boolean(parsed_bool)),
-            _ if let Ok(parsed) =SettingValue::convert_to_valid_type::<String>(value) => Ok(SettingValue::String(parsed)),
+            _ if let Ok(parsed_int) = SettingValue::convert_to_valid_type::<i32>(value) => {
+                Ok(SettingValue::Number(parsed_int))
+            }
+            _ if let Ok(parsed_bool) = SettingValue::convert_to_valid_type::<bool>(value) => {
+                Ok(SettingValue::Boolean(parsed_bool))
+            }
+            _ if let Ok(parsed) = SettingValue::convert_to_valid_type::<String>(value) => {
+                Ok(SettingValue::String(parsed))
+            }
             _ => Err(FormatError::InvalidValueType),
         }
     }

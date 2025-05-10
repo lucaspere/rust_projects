@@ -1,11 +1,9 @@
 use std::{
     io::stdin,
     sync::atomic::{AtomicBool, AtomicI32, AtomicU64, AtomicUsize, Ordering::Relaxed},
-    thread::{self, sleep},
+    thread::{self},
     time::{Duration, Instant},
 };
-
-use tokio::io::{BufReader, ReadBuf};
 
 static X: AtomicI32 = AtomicI32::new(0);
 static Y: AtomicI32 = AtomicI32::new(0);

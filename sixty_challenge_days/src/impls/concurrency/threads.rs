@@ -1,4 +1,3 @@
-use core::num;
 use std::{
     ops::Deref,
     sync::{Arc, Mutex, RwLock},
@@ -46,7 +45,7 @@ pub fn simple_thread() {
 
 pub fn scoped_threads() {
     let sended = SendedThread { number: &mut 10 };
-    let scoped = thread::scope(|s| {
+    thread::scope(|s| {
         s.spawn(|| {
             println!("Hello from a scoped thread! The number is: {:#?}", *sended);
         });

@@ -2,6 +2,7 @@
 #![deny(soft_unstable)]
 #![feature(asm)]
 #![feature(deadline_api)]
+#![feature(if_let_guard)]
 
 use std::{collections::LinkedList, future, io::Error, mem::size_of_val, path::Path, thread};
 
