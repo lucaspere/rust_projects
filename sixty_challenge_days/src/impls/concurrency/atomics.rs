@@ -1,8 +1,9 @@
 use std::{
     io::stdin,
+    ptr::null_mut,
     sync::{
         atomic::{
-            AtomicBool, AtomicI32, AtomicU64, AtomicUsize,
+            AtomicBool, AtomicI32, AtomicPtr, AtomicU64, AtomicUsize,
             Ordering::{Acquire, Relaxed, Release},
         },
         Once,
@@ -182,6 +183,34 @@ fn atomic_release_acquire() {
 
     println!("{}", DATA.load(Relaxed));
 }
+
+struct Data {
+    name: String,
+}
+
+fn get_data() -> &'static Data {
+    static PTR: AtomicPtr<Data> = AtomicPtr::new(null_mut());
+
+    let mut p = PTR.load(Acquire);
+
+    if p.is_null() {
+        p = Box::into_raw(Box::new(generate_data()));
+
+        if let Err(e) = PTR.compare_exchange(null_mut(), p, Release, Acquire) {
+            drop(unsafe { Box::from_raw(p) });
+
+            p = e;
+        }
+    }
+
+    unsafe { &*p }
+}
+
+fn generate_data() -> Data {
+    Data {
+        name: "Lucas".to_string(),
+    }
+}
 #[cfg(test)]
 mod tests {
 
@@ -223,5 +252,10 @@ mod tests {
     #[test]
     fn test_atomic_() {
         atomic_release_acquire();
+    }
+
+    #[test]
+    fn test_atomic_ptr() {
+        get_data();
     }
 }
