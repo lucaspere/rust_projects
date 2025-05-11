@@ -1,7 +1,13 @@
 use std::{
     io::stdin,
-    sync::atomic::{AtomicBool, AtomicI32, AtomicU64, AtomicUsize, Ordering::Relaxed},
-    thread::{self},
+    sync::{
+        atomic::{
+            AtomicBool, AtomicI32, AtomicU64, AtomicUsize,
+            Ordering::{Acquire, Relaxed, Release},
+        },
+        Once,
+    },
+    thread::{self, sleep},
     time::{Duration, Instant},
 };
 
@@ -135,15 +141,20 @@ pub fn lazy_eval() {
     }
 }
 
+const START: Once = Once::new();
 pub fn get_key() -> u64 {
     static KEY: AtomicU64 = AtomicU64::new(0);
     let key = KEY.load(Relaxed);
     if key == 0 {
-        let new_key = generate_key();
-        match KEY.compare_exchange(0, new_key, Relaxed, Relaxed) {
-            Ok(_) => new_key,
-            Err(k) => k,
-        }
+        START.call_once(|| {
+            let new_key = generate_key();
+
+            match KEY.compare_exchange(0, new_key, Relaxed, Relaxed) {
+                Ok(_) => new_key,
+                Err(k) => k,
+            };
+        });
+        KEY.load(Relaxed)
     } else {
         key
     }
@@ -152,11 +163,27 @@ pub fn get_key() -> u64 {
 fn generate_key() -> u64 {
     42
 }
+
+fn atomic_release_acquire() {
+    static DATA: AtomicU64 = AtomicU64::new(0);
+    static READY: AtomicBool = AtomicBool::new(false);
+
+    thread::spawn(|| {
+        DATA.fetch_add(123, Relaxed);
+
+        READY.store(true, Release);
+    });
+
+    while !READY.load(Relaxed) {
+        sleep(Duration::from_millis(500));
+
+        println!("Waiting...");
+    }
+
+    println!("{}", DATA.load(Relaxed));
+}
 #[cfg(test)]
 mod tests {
-    use std::borrow::BorrowMut;
-
-    use thread::spawn;
 
     use super::*;
 
@@ -182,11 +209,19 @@ mod tests {
 
     #[test]
     fn test_get_key() {
-        get_key();
+        let key = get_key();
+        let key2 = get_key();
+
+        assert_eq!(key, key2);
     }
 
     #[test]
     fn test_atomic_ordering() {
         atomic_ordering();
+    }
+
+    #[test]
+    fn test_atomic_() {
+        atomic_release_acquire();
     }
 }
