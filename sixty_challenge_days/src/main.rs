@@ -15,10 +15,6 @@ fn main() -> Result<(), Error> {
     // let day_1_path = Path::new("day-1.md");
     // let file = File::open_file(day_1_path)?;
     // file.print_file();
-    let sub_thr = thread::spawn(|| {
-        let id = thread::current().id();
-        println!("Hello from the sub thread, my ID is: {id:#?}");
-    });
 
     let id = thread::current().id();
     println!("Hello from the main thread, my ID is: {id:#?}");
@@ -37,9 +33,6 @@ fn main() -> Result<(), Error> {
     };
     println!("{y:?}");
 
-    let width1 = 30;
-    let height1 = 50;
-    let dimensions = (width1, height1);
     let mut order = OrderStatus::Pending;
 
     println!("{:?}", order);

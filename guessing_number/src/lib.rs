@@ -10,8 +10,8 @@ use std::{
 
 pub struct Config {
     secret: u32,
-    reader: Option<Box<dyn BufRead>>,
-    writer: Option<Box<dyn Write>>,
+    pub reader: Option<Box<dyn BufRead>>,
+    pub writer: Option<Box<dyn Write>>,
 }
 
 impl Config {
