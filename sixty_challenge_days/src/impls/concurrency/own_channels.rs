@@ -54,3 +54,30 @@ impl<T> Drop for Channel<T> {
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+    use std::thread;
+
+    use super::Channel;
+
+    #[test]
+    fn test_channel_send_receive_with_thread_parking() {
+        let channel = Channel::new();
+
+        let t = thread::current();
+
+        thread::scope(|s| {
+            s.spawn(|| {
+                channel.send("Hello world!");
+                t.unpark();
+            });
+
+            while !channel.is_ready() {
+                thread::park();
+            }
+
+            assert_eq!(channel.receive(), "helo world!");
+        });
+    }
+}
