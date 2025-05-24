@@ -1,19 +1,24 @@
+use std::marker::PhantomData;
 use std::sync::atomic::AtomicBool;
+use std::thread::{self, Thread};
 use std::{cell::UnsafeCell, mem::MaybeUninit};
 
 use std::sync::atomic::Ordering::{Acquire, Relaxed, Release};
 
 pub struct Sender<'a, T> {
     channel: &'a Channel<T>,
+    receiving_thread: Thread,
 }
 pub struct Receiver<'a, T> {
     channel: &'a Channel<T>,
+    _no_send: PhantomData<*const ()>,
 }
 
 impl<'a, T> Sender<'a, T> {
     pub fn send(self, message: T) {
         unsafe { (*self.channel.message.get()).write(message) };
         self.channel.is_ready.store(true, Release);
+        self.receiving_thread.unpark();
     }
 }
 
@@ -23,8 +28,8 @@ impl<'a, T> Receiver<'a, T> {
     }
 
     pub fn receive(&self) -> T {
-        if !self.channel.is_ready.swap(false, Acquire) {
-            panic!("no message available!");
+        while !self.channel.is_ready.swap(false, Acquire) {
+            thread::park();
         }
 
         // Safety: we've just check (and reset) the ready flag.
@@ -50,7 +55,16 @@ impl<T> Channel<T> {
     pub fn split(&mut self) -> (Sender<T>, Receiver<T>) {
         *self = Self::new();
 
-        (Sender { channel: self }, Receiver { channel: self })
+        (
+            Sender {
+                channel: self,
+                receiving_thread: thread::current(),
+            },
+            Receiver {
+                channel: self,
+                _no_send: PhantomData,
+            },
+        )
     }
 }
 impl<T> Drop for Channel<T> {
@@ -72,18 +86,12 @@ mod test {
     #[test]
     fn test_channel_send_receive_with_thread_parking() {
         let mut channel = Channel::new();
-        let t = thread::current();
 
         thread::scope(|s| {
             let (sender, receiver) = channel.split();
             s.spawn(|| {
                 sender.send("Hello world!");
-                t.unpark();
             });
-
-            while !receiver.is_ready() {
-                thread::park();
-            }
 
             assert_eq!(receiver.receive(), "Hello world!");
         });
