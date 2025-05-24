@@ -1,5 +1,7 @@
 use std::{cell::UnsafeCell, mem::MaybeUninit, sync::atomic::AtomicBool};
 
+use std::sync::atomic::Ordering::{Acquire, Relaxed, Release};
+
 pub struct Channel<T> {
     message: UnsafeCell<MaybeUninit<T>>,
     ready: AtomicBool,
@@ -18,16 +20,21 @@ impl<T> Channel<T> {
     /// Safety: Only call this once!
     pub unsafe fn send(&self, message: T) {
         (*self.message.get()).write(message);
-        self.ready.store(true, std::sync::atomic::Ordering::Release);
+        self.ready.store(true, Release);
     }
 
     pub fn is_ready(&self) -> bool {
-        self.ready.load(std::sync::atomic::Ordering::Acquire)
+        self.ready.load(Relaxed)
     }
 
-    /// Safety: Only call this once,
-    /// and only after is_ready() returns true!
-    pub unsafe fn receive(&self) -> T {
-        (*self.message.get()).assume_init_read()
+    /// Panic if no message is available yet,
+    /// or if the message was already consumed.
+    pub fn receive(&self) -> T {
+        if !self.ready.swap(false, Acquire) {
+            panic!("no message available!");
+        }
+
+        // Safety: we've just check (and reset) the ready flag.
+        unsafe { (*self.message.get()).assume_init_read() }
     }
 }
