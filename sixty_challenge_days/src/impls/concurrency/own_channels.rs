@@ -1,11 +1,16 @@
-use std::{cell::UnsafeCell, mem::MaybeUninit, sync::atomic::AtomicBool};
+use std::sync::atomic::AtomicU8;
+use std::{cell::UnsafeCell, mem::MaybeUninit};
 
 use std::sync::atomic::Ordering::{Acquire, Relaxed, Release};
 
+const EMPTY: u8 = 0;
+const WRITING: u8 = 1;
+const READY: u8 = 2;
+const READING: u8 = 3;
+
 pub struct Channel<T> {
     message: UnsafeCell<MaybeUninit<T>>,
-    ready: AtomicBool,
-    in_use: AtomicBool,
+    state: AtomicU8,
 }
 
 unsafe impl<T> Sync for Channel<T> where T: Send {}
@@ -14,29 +19,36 @@ impl<T> Channel<T> {
     pub const fn new() -> Self {
         Self {
             message: UnsafeCell::new(MaybeUninit::uninit()),
-            ready: AtomicBool::new(false),
-            in_use: AtomicBool::new(false),
+            state: AtomicU8::new(EMPTY),
         }
     }
 
     /// Panics when trying to send more than one message.
     pub fn send(&self, message: T) {
-        if !self.in_use.swap(true, Relaxed) {
+        if self
+            .state
+            .compare_exchange(EMPTY, WRITING, Relaxed, Relaxed)
+            .is_err()
+        {
             panic!("can't send more than one message!");
         }
 
         unsafe { (*self.message.get()).write(message) };
-        self.ready.store(true, Release);
+        self.state.store(READY, Release);
     }
 
     pub fn is_ready(&self) -> bool {
-        self.ready.load(Relaxed)
+        self.state.load(Relaxed) == READY
     }
 
     /// Panic if no message is available yet,
     /// or if the message was already consumed.
     pub fn receive(&self) -> T {
-        if !self.ready.swap(false, Acquire) {
+        if !self
+            .state
+            .compare_exchange(READY, READING, Acquire, Relaxed)
+            .is_err()
+        {
             panic!("no message available!");
         }
 
@@ -47,7 +59,7 @@ impl<T> Channel<T> {
 
 impl<T> Drop for Channel<T> {
     fn drop(&mut self) {
-        if *self.ready.get_mut() {
+        if *self.state.get_mut() == READY {
             unsafe {
                 self.message.get_mut().assume_init_drop();
             }
