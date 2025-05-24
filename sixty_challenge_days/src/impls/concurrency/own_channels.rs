@@ -5,6 +5,7 @@ use std::sync::atomic::Ordering::{Acquire, Relaxed, Release};
 pub struct Channel<T> {
     message: UnsafeCell<MaybeUninit<T>>,
     ready: AtomicBool,
+    in_use: AtomicBool,
 }
 
 unsafe impl<T> Sync for Channel<T> where T: Send {}
@@ -14,12 +15,17 @@ impl<T> Channel<T> {
         Self {
             message: UnsafeCell::new(MaybeUninit::uninit()),
             ready: AtomicBool::new(false),
+            in_use: AtomicBool::new(false),
         }
     }
 
-    /// Safety: Only call this once!
-    pub unsafe fn send(&self, message: T) {
-        (*self.message.get()).write(message);
+    /// Panics when trying to send more than one message.
+    pub fn send(&self, message: T) {
+        if !self.in_use.swap(true, Relaxed) {
+            panic!("can't send more than one message!");
+        }
+
+        unsafe { (*self.message.get()).write(message) };
         self.ready.store(true, Release);
     }
 
