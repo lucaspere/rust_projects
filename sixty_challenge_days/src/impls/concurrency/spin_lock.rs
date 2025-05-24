@@ -35,51 +35,7 @@ impl Lock for SpinLock {
     }
 }
 
-#[derive(Debug)] // Para poder imprimir
-struct BankAccount {
-    id: u32,
-    balance: i64,
-    transaction_log: Vec<String>,
-}
-
-impl BankAccount {
-    fn new(id: u32, initial_balance: i64) -> Self {
-        BankAccount {
-            id,
-            balance: initial_balance,
-            transaction_log: Vec::new(),
-        }
-    }
-
-    pub fn deposit(&mut self, amount: i64, actor: &str) {
-        if amount > 0 {
-            self.balance += amount;
-            self.transaction_log.push(format!(
-                "{} deposited: {}. New balance: {}",
-                actor, amount, self.balance
-            ));
-        }
-    }
-
-    pub fn withdraw(&mut self, amount: i64, actor: &str) -> bool {
-        if amount > 0 && self.balance >= amount {
-            self.balance -= amount;
-            self.transaction_log.push(format!(
-                "{} withdrew: {}. New balance: {}",
-                actor, amount, self.balance
-            ));
-            true
-        } else {
-            self.transaction_log.push(format!(
-                "{} failed to withdraw: {}. Insufficient funds or invalid amount. Balance: {}",
-                actor, amount, self.balance
-            ));
-            false
-        }
-    }
-}
-
-struct LockedData<T> {
+pub struct LockedData<T> {
     lock: SpinLock,
     data: UnsafeCell<T>,
 }
@@ -88,14 +44,14 @@ unsafe impl<T: Send> Send for LockedData<T> {}
 unsafe impl<T: Sync> Sync for LockedData<T> {}
 
 impl<T> LockedData<T> {
-    fn new(data: T) -> Self {
+    pub fn new(data: T) -> Self {
         Self {
             lock: SpinLock::new(),
             data: UnsafeCell::new(data),
         }
     }
 
-    fn with_lock<F, R>(&self, actor_name: &str, operation: F) -> R
+    pub fn with_lock<F, R>(&self, actor_name: &str, operation: F) -> R
     where
         F: FnOnce(&str, &mut T) -> R,
     {
@@ -110,15 +66,11 @@ impl<T> LockedData<T> {
 #[cfg(test)]
 mod tests {
 
-    use std::sync::atomic::Ordering::Relaxed;
-    use std::{
-        sync::{atomic::AtomicUsize, Arc},
-        thread,
+    use std::{sync::Arc, thread};
+
+    use crate::impls::{
+        bank_account::bank_account::BankAccount, concurrency::spin_lock::LockedData,
     };
-
-    use crate::impls::concurrency::spin_lock::{BankAccount, LockedData};
-
-    use super::{Lock, SpinLock};
 
     #[test]
     fn test_spin_lock() {
@@ -154,7 +106,7 @@ mod tests {
 
         println!("\n--- Operations Completed ---");
         locked_account.with_lock("main_thread_final_check", |_, account| {
-            println!("Final Account: {:?}", account);
+            println!("Final Account: {}", account.id);
             println!("Final Balance: {}", account.balance);
             println!("\nComplete Transaction Log:");
             for entry in &account.transaction_log {

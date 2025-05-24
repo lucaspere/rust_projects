@@ -1,3 +1,4 @@
+pub mod bank_account;
 pub mod basic_algorithm;
 pub mod concurrency;
 pub mod dsa;
