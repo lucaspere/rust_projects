@@ -1,0 +1,21 @@
+// shared-messaging/proto/events.proto
+syntax = "proto3";
+
+// Opcional: defina um package para evitar conflitos de nome
+package dexevents;
+
+// Evento persistente para o Iggy
+message SwapCompleted {
+  string transaction_id = 1;
+  uint64 user_id = 2;
+  string token_in = 3;
+  string token_out = 4;
+  double amount_in = 5;
+}
+
+// Evento em tempo real para o NATS
+message PriceUpdate {
+  string token_pair = 1; // ex: "BTC-USD"
+  double price = 2;
+  uint64 timestamp = 3;
+}

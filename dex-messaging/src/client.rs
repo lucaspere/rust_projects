@@ -1,7 +1,11 @@
 use crate::config::MessagingConfig;
-use crate::error::{IggySnafu, SerializationSnafu};
-use crate::model::Event;
+use crate::error::{
+    IggySnafu, NatsConnectSnafu, NatsPublishSnafu, NatsSnafu, NatsSubscribeSnafu,
+    SerializationSnafu,
+};
+use crate::model::{Event, PersistentEvent, RealtimeEvent};
 use crate::Result;
+use futures::StreamExt;
 use iggy::client::{Client, MessageClient, UserClient}; // Importe o trait Client
 use iggy::client::{StreamClient, TopicClient};
 use iggy::clients::client::IggyClient;
@@ -22,10 +26,12 @@ use snafu::ResultExt;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::time::sleep;
+use tracing::{debug, error, info, warn};
 
 #[derive(Clone)]
 pub struct MessagingClient {
     client: Arc<IggyClient>,
+    nats_client: Arc<async_nats::Client>,
 }
 
 impl MessagingClient {
@@ -51,8 +57,14 @@ impl MessagingClient {
                 .context(IggySnafu)?;
         }
 
+        let nats_client = async_nats::connect(&config.nats_server_address)
+            .await
+            .context(NatsConnectSnafu)?;
+        info!("Successfully connected to NATS server.");
+
         Ok(Self {
             client: Arc::new(client),
+            nats_client: Arc::new(nats_client),
         })
     }
 
@@ -79,21 +91,19 @@ impl MessagingClient {
         Ok(())
     }
 
-    pub async fn publish_batch<E: Event>(&self, events: &[E]) -> Result<()> {
+    pub async fn publish_batch<E: PersistentEvent>(&self, events: &[E]) -> Result<()> {
         // Publica um lote de eventos de uma vez.
         if events.is_empty() {
             return Ok(());
         }
 
-        let messages: std::result::Result<Vec<Message>, _> = events
+        let messages: Vec<Message> = events
             .iter()
             .map(|event| {
-                let payload = serde_json::to_vec(event).context(SerializationSnafu)?;
-                Ok(Message::new(None, payload.into(), None))
+                let payload = event.encode_to_vec();
+                Message::new(None, payload.into(), None)
             })
             .collect();
-
-        let messages = messages?;
 
         let mut command = SendMessages {
             stream_id: E::stream_id(),
@@ -115,7 +125,11 @@ impl MessagingClient {
         Ok(())
     }
 
-    pub async fn consume<E: Event, F>(&self, consumer_name: &str, mut handler: F) -> Result<()>
+    pub async fn consume<E: PersistentEvent, F>(
+        &self,
+        consumer_name: &str,
+        mut handler: F,
+    ) -> Result<()>
     where
         F: FnMut(E) -> std::result::Result<(), Box<dyn std::error::Error + Send + Sync>>,
     {
@@ -156,7 +170,7 @@ impl MessagingClient {
             match polled {
                 Ok(messages) if !messages.messages.is_empty() => {
                     for msg in messages.messages {
-                        match serde_json::from_slice::<E>(&msg.payload) {
+                        match E::decode(&msg.payload[..]) {
                             Ok(event) => {
                                 if let Err(e) = handler(event) {
                                     eprintln!("Error processing event: {:?}", e);
@@ -178,7 +192,7 @@ impl MessagingClient {
         }
     }
 
-    pub async fn ensure_stream_and_topic<E: Event>(&self) -> Result<()> {
+    pub async fn ensure_stream_and_topic<E: PersistentEvent>(&self) -> Result<()> {
         let stream_id = E::stream_id();
         let topic_id = E::topic_id();
 
@@ -227,6 +241,52 @@ impl MessagingClient {
                 /* Já existe, tudo bem */
             }
             Err(e) => return Err(e).context(IggySnafu),
+        }
+
+        Ok(())
+    }
+
+    /// Publica um evento em tempo real no NATS.
+    /// Extremamente rápido e leve ("fire and forget").
+    pub async fn publish_realtime<E: RealtimeEvent>(&self, event: &E) -> Result<()> {
+        let subject = event.subject();
+        let payload = event.encode_to_vec();
+
+        debug!(subject = %subject, "Publishing realtime event");
+        self.nats_client
+            .publish(subject, payload.into())
+            .await
+            .context(NatsPublishSnafu)?;
+
+        Ok(())
+    }
+
+    /// Inscreve-se em um assunto NATS (pode usar wildcards, ex: "prices.*")
+    /// e processa as mensagens recebidas com um handler.
+    /// Esta função entra em um loop infinito para escutar continuamente.
+    pub async fn subscribe_realtime<E, F>(&self, subject: &str, mut handler: F) -> Result<()>
+    where
+        E: RealtimeEvent, // O tipo de evento que esperamos deserializar
+        F: FnMut(E) -> std::result::Result<(), Box<dyn std::error::Error + Send + Sync>>,
+    {
+        info!(subject = %subject, "Subscribing to realtime subject");
+        let mut sub = self
+            .nats_client
+            .subscribe(subject.to_string())
+            .await
+            .context(NatsSubscribeSnafu)?;
+
+        while let Some(msg) = sub.next().await {
+            match E::decode(&msg.payload[..]) {
+                Ok(event) => {
+                    if let Err(e) = handler(event) {
+                        error!(subject = %msg.subject, error = %e, "Error processing realtime event");
+                    }
+                }
+                Err(e) => {
+                    warn!(subject = %msg.subject, error = %e, "Failed to deserialize realtime event payload");
+                }
+            }
         }
 
         Ok(())

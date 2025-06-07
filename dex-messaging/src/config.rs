@@ -10,6 +10,7 @@ pub struct LoginCredentials {
 #[derive(Debug, Clone)]
 pub struct MessagingConfig {
     pub iggy_server_address: String,
+    pub nats_server_address: String,
     pub connect_timeout_ms: u64,
     pub request_timeout_ms: u64,
     pub reconnect_interval_ms: u64,
@@ -38,8 +39,13 @@ impl MessagingConfig {
             .build()
         })?;
         let login_credentials = LoginCredentials { username, password };
+
+        let nats_server_address = env::var("NATS_SERVER_ADDRESS").unwrap_or_else(|_| {
+            "nats://localhost:4222".to_string() // Default NATS server address
+        });
         Ok(Self {
             iggy_server_address,
+            nats_server_address,
             connect_timeout_ms: 1,
             max_reconnect_retries: None,
             reconnect_interval_ms: 3,

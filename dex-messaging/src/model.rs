@@ -1,5 +1,11 @@
+use async_trait::async_trait;
 use iggy::identifier::Identifier;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
+
+// Inclui o código gerado pelo prost a partir do events.proto
+pub mod dexevents {
+    include!(concat!(env!("OUT_DIR"), "/dexevents.rs"));
+}
 
 pub trait Event: Serialize + DeserializeOwned + Send + Sync + 'static {
     fn stream_id() -> Identifier;
@@ -9,46 +15,42 @@ pub trait Event: Serialize + DeserializeOwned + Send + Sync + 'static {
     fn event_name() -> &'static str;
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct SwapCompleted {
-    pub transaction_id: String,
-    pub user_id: u64,
-    pub token_in: String,
-    pub token_out: String,
-    pub amount_in: f64,
+pub trait PersistentEvent: prost::Message + Default + Send + Sync + 'static {
+    fn stream_id() -> Identifier;
+    fn topic_id() -> Identifier;
+    fn event_name() -> &'static str {
+        std::any::type_name::<Self>()
+            .rsplit("::")
+            .next()
+            .unwrap_or("UnknownEvent")
+    }
 }
 
-impl Event for SwapCompleted {
+#[async_trait]
+pub trait RealtimeEvent: prost::Message + Default + Send + Sync + 'static {
+    fn subject(&self) -> String;
+}
+
+// --- Implementações ---
+// Implementamos nosso trait para as structs geradas pelo Prost.
+
+impl PersistentEvent for dexevents::SwapCompleted {
     fn stream_id() -> Identifier {
-        Identifier::numeric(1).unwrap() // Stream "dex_events"
+        Identifier::numeric(1).unwrap()
     }
 
     fn topic_id() -> Identifier {
-        Identifier::numeric(1).unwrap() // Topic "swaps"
+        Identifier::numeric(1).unwrap()
     }
 
     fn event_name() -> &'static str {
-        "SwapCompleted"
+        "swap_completed"
     }
 }
 
-// Você pode adicionar quantos eventos quiser...
-#[derive(Debug, Serialize, Deserialize)]
-pub struct UserScored {
-    pub user_id: u64,
-    pub new_score: u32,
-}
-
-impl Event for UserScored {
-    fn stream_id() -> Identifier {
-        Identifier::numeric(1).unwrap() // Stream "dex_events"
-    }
-
-    fn topic_id() -> Identifier {
-        Identifier::numeric(2).unwrap() // Topic "scores"
-    }
-
-    fn event_name() -> &'static str {
-        "UserScored"
+#[async_trait]
+impl RealtimeEvent for dexevents::PriceUpdate {
+    fn subject(&self) -> String {
+        format!("prices.{}", self.token_pair)
     }
 }

@@ -1,4 +1,5 @@
-use bullpen_dex_messaging::{model::SwapCompleted, MessagingClient, MessagingConfig};
+use bullpen_dex_messaging::model::dexevents;
+use bullpen_dex_messaging::{MessagingClient, MessagingConfig};
 use dotenv::dotenv;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
@@ -23,7 +24,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Garantir que stream e topic existem
     iggy_client
-        .ensure_stream_and_topic::<SwapCompleted>()
+        .ensure_stream_and_topic::<dexevents::SwapCompleted>()
         .await?;
     info!("✅ Stream and Topic ensured for SwapCompleted events");
 
@@ -55,29 +56,28 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     });
 
     // Handler realista para processar eventos de swap
-    let handler =
-        move |event: SwapCompleted| -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-            let count = processed_count.fetch_add(1, Ordering::Relaxed) + 1;
+    let handler = move |event: dexevents::SwapCompleted| -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        let count = processed_count.fetch_add(1, Ordering::Relaxed) + 1;
 
-            info!(
-                "🔄 Processing SwapCompleted #{}: User {} swapped {:.2} {} → {} (TX: {})",
-                count,
-                event.user_id,
-                event.amount_in,
-                event.token_in,
-                event.token_out,
-                &event.transaction_id[..8] // Mostrar apenas primeiros 8 chars do hash
-            );
+        info!(
+            "🔄 Processing SwapCompleted #{}: User {} swapped {:.2} {} → {} (TX: {})",
+            count,
+            event.user_id,
+            event.amount_in,
+            event.token_in,
+            event.token_out,
+            &event.transaction_id[..8] // Mostrar apenas primeiros 8 chars do hash
+        );
 
-            // Simular processamento real com diferentes cenários
-            simulate_business_logic(&event)?;
+        // Simular processamento real com diferentes cenários
+        simulate_business_logic(&event)?;
 
-            info!(
-                "✅ SwapCompleted #{} processed successfully for user {}",
-                count, event.user_id
-            );
-            Ok(())
-        };
+        info!(
+            "✅ SwapCompleted #{} processed successfully for user {}",
+            count, event.user_id
+        );
+        Ok(())
+    };
 
     info!("🎯 Starting event consumption for SwapCompleted events...");
 
@@ -91,7 +91,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 /// Simula lógica de negócio realista para processamento de swaps
 fn simulate_business_logic(
-    event: &SwapCompleted,
+    event: &dexevents::SwapCompleted,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     // Simular diferentes cenários baseados no user_id
     match event.user_id % 10 {
@@ -202,7 +202,7 @@ async fn event_publisher(client: MessagingClient) -> Result<(), Box<dyn std::err
                 format!("tx_{:016x}", event_id + i)
             };
 
-            let event = SwapCompleted {
+            let event = dexevents::SwapCompleted {
                 user_id,
                 amount_in: amount,
                 token_in: token_pair.0.to_string(),
