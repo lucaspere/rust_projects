@@ -2,7 +2,7 @@ use crate::config::MessagingConfig;
 use crate::error::{IggySnafu, SerializationSnafu};
 use crate::model::Event;
 use crate::Result;
-use iggy::client::{Client, MessageClient}; // Importe o trait Client
+use iggy::client::{Client, MessageClient, UserClient}; // Importe o trait Client
 use iggy::client::{StreamClient, TopicClient};
 use iggy::clients::client::IggyClient;
 use iggy::compression::compression_algorithm::CompressionAlgorithm;
@@ -29,12 +29,9 @@ pub struct MessagingClient {
 }
 
 impl MessagingClient {
-    /// Cria e conecta um novo cliente de mensageria.
-    /// Esta função deve ser chamada uma vez na inicialização do serviço.
     pub async fn new(config: MessagingConfig) -> Result<Self> {
         let transport_config = Arc::new(TcpClientConfig {
             server_address: config.iggy_server_address.clone(),
-            // FUNDAMENTAL: política de reconexão automática
             reconnection: TcpClientReconnectionConfig {
                 enabled: true,
                 interval: config.reconnect_interval_ms.into(),
@@ -47,15 +44,18 @@ impl MessagingClient {
         let client = Box::new(TcpClient::create(transport_config).context(IggySnafu)?);
         let client = IggyClient::create(client, None, None); // Use IggyClient::create
         client.connect().await.context(IggySnafu)?;
+        if let Some(credentials) = config.login_credentials {
+            client
+                .login_user(credentials.username.as_str(), credentials.password.as_str())
+                .await
+                .context(IggySnafu)?;
+        }
 
         Ok(Self {
             client: Arc::new(client),
         })
     }
 
-    /// Publica um evento genérico.
-    /// Esta função é otimizada para baixa latência, pois não verifica se o stream/topic existe.
-    /// A criação de streams/topics deve ser feita offline ou em um processo de inicialização.
     pub async fn publish<E: Event>(&self, event: &E) -> Result<()> {
         let payload = serde_json::to_vec(event).context(SerializationSnafu)?;
         let message = Message::new(None, payload.into(), None);
@@ -115,8 +115,6 @@ impl MessagingClient {
         Ok(())
     }
 
-    /// Inicia um loop para consumir eventos de um tópico específico.
-    /// Executa a função `handler` para cada evento recebido.
     pub async fn consume<E: Event, F>(&self, consumer_name: &str, mut handler: F) -> Result<()>
     where
         F: FnMut(E) -> std::result::Result<(), Box<dyn std::error::Error + Send + Sync>>,
@@ -195,7 +193,7 @@ impl MessagingClient {
             .await
         {
             Ok(_) => println!("Stream {} created.", stream_id),
-            Err(IggyError::StreamIdAlreadyExists(..)) => {}
+            Err(IggyError::StreamIdAlreadyExists(..) | IggyError::StreamNameAlreadyExists(..)) => {}
             Err(e) => return Err(e).context(IggySnafu),
         }
 
@@ -225,7 +223,9 @@ impl MessagingClient {
             .await
         {
             Ok(_) => println!("Topic {}/{} created.", stream_id, topic_id),
-            Err(IggyError::TopicIdAlreadyExists(..)) => { /* Já existe, tudo bem */ }
+            Err(IggyError::TopicIdAlreadyExists(..) | IggyError::TopicNameAlreadyExists(..)) => {
+                /* Já existe, tudo bem */
+            }
             Err(e) => return Err(e).context(IggySnafu),
         }
 

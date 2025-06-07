@@ -1,0 +1,19 @@
+services:
+  iggy:
+    image: iggyrs/iggy:latest
+    container_name: iggy-server
+    ports:
+      - "8090:8090"  # HTTP API
+      - "8080:8080"  # TCP
+      - "8081:8081"  # QUIC (opcional)
+    environment:
+      IGGY_ROOT_USERNAME: iggy
+      IGGY_ROOT_PASSWORD: iggy
+    volumes:
+      - iggy_data:/app/local_data
+      - ./server.toml:/app/server.toml
+    restart: unless-stopped
+
+volumes:
+  iggy_data:
+    driver: local 

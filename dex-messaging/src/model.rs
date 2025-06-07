@@ -1,21 +1,13 @@
 use iggy::identifier::Identifier;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
-/// Um trait que todo evento publicável no Iggy deve implementar.
-/// Fornece metadados sobre onde o evento deve ser armazenado.
 pub trait Event: Serialize + DeserializeOwned + Send + Sync + 'static {
-    /// O identificador do Stream onde este evento será salvo.
     fn stream_id() -> Identifier;
 
-    /// O identificador do Topic onde este evento será salvo.
     fn topic_id() -> Identifier;
 
-    /// O nome do evento, usado para logs.
     fn event_name() -> &'static str;
 }
-
-// --------- Exemplo de Implementação de um Evento ---------
-// Cada serviço pode definir seus próprios eventos, mas todos implementarão o trait Event.
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SwapCompleted {

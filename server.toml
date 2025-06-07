@@ -1,0 +1,34 @@
+# Iggy Server Configuration - Simplified
+# Basic configuration for Docker setup
+
+[personal_access_token_cleaner]
+cleaner.enabled = true
+cleaner.interval = 60
+expiry = 3600
+
+[server]
+name = "iggy-server"
+
+[system]
+logging.level = "info"
+
+[message_cleaner]
+enabled = true
+interval = 60
+
+[cache]
+enabled = true
+size = "512MB"
+
+[compression]
+allow_override = true
+
+[encryption]
+enabled = false
+
+# Storage configuration
+[data_maintenance]
+archival.enabled = false
+
+[disk]
+path = "/app/local_data" 
