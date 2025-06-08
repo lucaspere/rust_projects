@@ -1,13 +1,10 @@
-// Em shared-messaging/src/nats_client.rs
 use crate::config::NatsConfig;
-use crate::error::{NatsConnectSnafu, NatsPublishSnafu, NatsSnafu, NatsSubscribeSnafu};
-use crate::model::{RealtimeEvent, RealtimeEventSubject};
-use crate::traits::Realtime;
+use crate::error::{NatsConnectSnafu, NatsPublishSnafu, NatsSnafu};
+use crate::traits::DynRealtime;
 use crate::DexMessagingResult;
 use async_trait::async_trait;
-use futures::{future, StreamExt};
+use futures::future;
 use snafu::prelude::*;
-use tracing::{error, info, warn};
 
 #[derive(Clone)]
 pub struct NatsMessagingClient {
@@ -26,10 +23,8 @@ impl NatsMessagingClient {
 }
 
 #[async_trait]
-impl Realtime for NatsMessagingClient {
-    async fn publish<E: RealtimeEvent>(&self, event: &E) -> DexMessagingResult<()> {
-        let subject = event.subject();
-        let payload = event.encode_to_vec();
+impl DynRealtime for NatsMessagingClient {
+    async fn publish_raw(&self, subject: String, payload: Vec<u8>) -> DexMessagingResult<()> {
         self.client
             .publish(subject, payload.into())
             .await
@@ -39,41 +34,13 @@ impl Realtime for NatsMessagingClient {
         Ok(())
     }
 
-    async fn publish_batch<E: RealtimeEvent>(&self, events: &[E]) -> DexMessagingResult<()> {
-        future::join_all(events.iter().map(|event| self.publish(event))).await;
-
-        Ok(())
-    }
-
-    async fn subscribe<E, F>(
-        &self,
-        subject: RealtimeEventSubject,
-        mut handler: F,
-    ) -> DexMessagingResult<()>
-    where
-        E: RealtimeEvent,
-        F: FnMut(E) -> DexMessagingResult<()> + Send,
-    {
-        info!(subject = %subject, "Subscribing to realtime subject");
-        let mut sub = self
-            .client
-            .subscribe(subject.to_string())
-            .await
-            .context(NatsSubscribeSnafu)
-            .context(NatsSnafu)?;
-
-        while let Some(msg) = sub.next().await {
-            match E::decode(&msg.payload[..]) {
-                Ok(event) => {
-                    if let Err(e) = handler(event) {
-                        error!(subject = %msg.subject, error = %e, "Error processing realtime event");
-                    }
-                }
-                Err(e) => {
-                    warn!(subject = %msg.subject, error = %e, "Failed to deserialize realtime event payload");
-                }
-            }
-        }
+    async fn publish_batch_raw(&self, messages: &[(String, Vec<u8>)]) -> DexMessagingResult<()> {
+        future::join_all(
+            messages
+                .iter()
+                .map(|(subject, payload)| self.publish_raw(subject.clone(), payload.clone())),
+        )
+        .await;
 
         Ok(())
     }

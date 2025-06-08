@@ -1,8 +1,10 @@
 use bullpen_dex_messaging::{
     config::NatsConfig,
+    manager::SubscriptionService,
     model::{dexevents::PriceUpdate, RealtimeEventSubject},
     prelude::NatsMessagingClient,
-    traits::Realtime,
+    providers::MockStreamProvider,
+    traits::{DynRealtime, DynRealtimeExt},
     DexMessagingResult,
 };
 use dotenv::dotenv;
@@ -23,11 +25,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber failed");
     info!("🚀 Starting NATS Event Simulator...");
-    let messaging_client = Arc::new(NatsMessagingClient::new(NatsConfig::from_env()?).await?);
+    let nats_client = NatsMessagingClient::new(NatsConfig::from_env()?).await?;
+    let provider = Arc::new(MockStreamProvider);
+    let publisher: Arc<dyn DynRealtime> = Arc::new(nats_client.clone());
+    let subscription_service = SubscriptionService::new(publisher.clone(), provider);
     info!("✅ Connected to NATS and Iggy successfully");
 
     // Spawn price publisher task
-    let publisher_client = messaging_client.clone();
+    let publisher_client = publisher.clone();
     tokio::spawn(async move {
         if let Err(e) = price_publisher(publisher_client).await {
             error!("Price publisher failed: {}", e);
@@ -35,7 +40,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     });
 
     // Spawn swap events publisher task
-    let publisher_client = messaging_client.clone();
+    let publisher_client = publisher.clone();
     tokio::spawn(async move {
         if let Err(e) = price_publisher(publisher_client).await {
             error!("Swap publisher failed: {}", e);
@@ -63,20 +68,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     // Subscribe to all price updates using NATS wildcard
-    messaging_client
-        .subscribe::<PriceUpdate, _>(
-            RealtimeEventSubject::PriceUpdate("*".to_string()),
-            price_handler,
-        )
-        .await?;
+    let _subscription = subscription_service
+        .subscribe(RealtimeEventSubject::PriceUpdate("*".to_string()).to_string())
+        .await;
 
     Ok(())
 }
 
 /// Publishes realistic price updates for various trading pairs
-async fn price_publisher(
-    client: Arc<NatsMessagingClient>,
-) -> Result<(), Box<dyn std::error::Error>> {
+async fn price_publisher(client: Arc<dyn DynRealtime>) -> Result<(), Box<dyn std::error::Error>> {
     info!("📡 Starting price publisher...");
 
     // Define trading pairs with base prices

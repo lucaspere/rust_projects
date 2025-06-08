@@ -49,13 +49,15 @@ pub mod nats_client;
 // Módulos de suporte
 pub mod config;
 pub mod error;
+pub mod manager;
 pub mod model;
+pub mod providers;
 pub mod traits;
 
 pub mod prelude {
     pub use crate::model::{
         dexevents::{PriceUpdate, SwapCompleted},
-        PersistentEvent, RealtimeEvent,
+        PersistentEvent, RealtimeEvent, RealtimeEventSubject,
     };
 
     pub use crate::config::IggyConfig;
@@ -64,9 +66,13 @@ pub mod prelude {
     pub use crate::config::NatsConfig;
     pub use crate::error::NatsError;
     pub use crate::nats_client::NatsMessagingClient;
+
+    pub use crate::traits::{DynRealtime, DynRealtimeExt, Persistent};
 }
 
 pub type DexMessagingResult<T> = std::result::Result<T, ErrorSnafu>;
+pub type DexMessagingResultAsync<T> =
+    std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;
 
 pub use error::ErrorSnafu;
 pub use model::Event;

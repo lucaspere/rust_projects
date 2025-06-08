@@ -1,3 +1,4 @@
+use crate::model::dexevents::PriceUpdate;
 use crate::model::{PersistentEvent, RealtimeEvent, RealtimeEventSubject};
 use crate::DexMessagingResult;
 use async_trait::async_trait;
@@ -15,11 +16,7 @@ pub trait Persistent: Send + Sync {
 }
 
 #[async_trait]
-pub trait Realtime: Send + Sync {
-    async fn publish<E: RealtimeEvent>(&self, event: &E) -> DexMessagingResult<()>;
-
-    async fn publish_batch<E: RealtimeEvent>(&self, events: &[E]) -> DexMessagingResult<()>;
-
+pub trait RealtimeSubscription: Send + Sync {
     async fn subscribe<E, F>(
         &self,
         subject: RealtimeEventSubject,
@@ -28,4 +25,36 @@ pub trait Realtime: Send + Sync {
     where
         E: RealtimeEvent,
         F: FnMut(E) -> DexMessagingResult<()> + Send;
+}
+
+/// Dyn-compatible trait for realtime messaging
+/// This trait uses serialized data internally to be object-safe while providing a generic interface
+#[async_trait]
+pub trait DynRealtime: Send + Sync {
+    async fn publish_raw(&self, subject: String, payload: Vec<u8>) -> DexMessagingResult<()>;
+    async fn publish_batch_raw(&self, messages: &[(String, Vec<u8>)]) -> DexMessagingResult<()>;
+}
+
+/// Extension trait to provide generic methods for DynRealtime
+#[async_trait]
+pub trait DynRealtimeExt {
+    async fn publish<E: RealtimeEvent>(&self, event: &E) -> DexMessagingResult<()>;
+    async fn publish_batch<E: RealtimeEvent>(&self, events: &[E]) -> DexMessagingResult<()>;
+}
+
+#[async_trait]
+impl<T: DynRealtime + ?Sized> DynRealtimeExt for T {
+    async fn publish<E: RealtimeEvent>(&self, event: &E) -> DexMessagingResult<()> {
+        let subject = event.subject();
+        let payload = event.encode_to_vec();
+        self.publish_raw(subject, payload).await
+    }
+
+    async fn publish_batch<E: RealtimeEvent>(&self, events: &[E]) -> DexMessagingResult<()> {
+        let messages: Vec<(String, Vec<u8>)> = events
+            .iter()
+            .map(|event| (event.subject(), event.encode_to_vec()))
+            .collect();
+        self.publish_batch_raw(&messages).await
+    }
 }
