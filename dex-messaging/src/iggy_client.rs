@@ -3,28 +3,26 @@ use crate::error::{IggyClientSnafu, IggySnafu};
 use crate::model::{DexMessagingResult, PersistentEvent};
 use crate::traits::Persistent;
 use async_trait::async_trait;
-use iggy::client::{
-    Client, ConsumerOffsetClient, MessageClient, StreamClient, TopicClient, UserClient,
+use iggy::{
+    client::{Client, MessageClient, StreamClient, TopicClient, UserClient},
+    clients::client::IggyClient,
+    compression::compression_algorithm::CompressionAlgorithm,
+    consumer::Consumer,
+    error::IggyError,
+    identifier::Identifier,
+    messages::{
+        poll_messages::{PollMessages, PollingStrategy},
+        send_messages::{Message, Partitioning, SendMessages},
+    },
+    streams::create_stream::CreateStream,
+    tcp::client::TcpClient,
+    tcp::config::{TcpClientConfig, TcpClientReconnectionConfig},
+    topics::create_topic::CreateTopic,
+    utils::{duration::IggyDuration, expiry::IggyExpiry, topic_size::MaxTopicSize},
 };
-use iggy::clients::client::IggyClient;
-use iggy::clients::consumer::IggyConsumerBuilder;
-use iggy::compression::compression_algorithm::CompressionAlgorithm;
-use iggy::consumer::Consumer;
-use iggy::error::IggyError;
-use iggy::identifier::Identifier;
-use iggy::messages::poll_messages::{PollMessages, PollingStrategy};
-use iggy::messages::send_messages::{Message, Partitioning, SendMessages};
-use iggy::stream_builder::IggyConsumerConfig;
-use iggy::streams::create_stream::CreateStream;
-use iggy::tcp::client::TcpClient;
-use iggy::tcp::config::{TcpClientConfig, TcpClientReconnectionConfig};
-use iggy::topics::create_topic::CreateTopic;
-use iggy::utils::duration::IggyDuration;
-use iggy::utils::expiry::IggyExpiry;
-use iggy::utils::topic_size::MaxTopicSize;
 use snafu::prelude::*;
 use std::sync::Arc;
-use tokio::time::{Duration, sleep};
+use tokio::time::{sleep, Duration};
 
 pub struct IggyMessagingClient {
     client: IggyClient,
