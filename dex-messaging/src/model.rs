@@ -1,6 +1,7 @@
 use async_trait::async_trait;
 use iggy::identifier::Identifier;
-use serde::{Serialize, de::DeserializeOwned};
+use serde::{de::DeserializeOwned, Serialize};
+use strum::Display;
 
 pub mod dexevents {
     include!(concat!(env!("OUT_DIR"), "/dexevents.rs"));
@@ -42,11 +43,24 @@ impl PersistentEvent for dexevents::SwapCompleted {
 #[async_trait]
 pub trait RealtimeEvent: prost::Message + Default + Send + Sync + 'static {
     fn subject(&self) -> String;
+    fn to_subject(&self) -> RealtimeEventSubject;
 }
 
 #[async_trait]
 impl RealtimeEvent for dexevents::PriceUpdate {
     fn subject(&self) -> String {
-        format!("prices.{}", self.token_pair)
+        self.to_subject().to_string()
     }
+
+    fn to_subject(&self) -> RealtimeEventSubject {
+        RealtimeEventSubject::PriceUpdate(self.token_pair.clone())
+    }
+}
+
+#[derive(Display)]
+pub enum RealtimeEventSubject {
+    #[strum(serialize = "prices.{0}")]
+    PriceUpdate(String),
+    #[strum(serialize = "swaps.{0}")]
+    Txs(String),
 }

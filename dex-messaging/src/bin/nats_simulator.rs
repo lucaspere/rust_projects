@@ -1,6 +1,9 @@
 use bullpen_dex_messaging::{
-    config::NatsConfig, model::dexevents::PriceUpdate, prelude::NatsMessagingClient,
-    traits::Realtime, DexMessagingResult,
+    config::NatsConfig,
+    model::{dexevents::PriceUpdate, RealtimeEventSubject},
+    prelude::NatsMessagingClient,
+    traits::Realtime,
+    DexMessagingResult,
 };
 use dotenv::dotenv;
 use std::{
@@ -61,7 +64,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Subscribe to all price updates using NATS wildcard
     messaging_client
-        .subscribe::<PriceUpdate, _>("prices.*", price_handler)
+        .subscribe::<PriceUpdate, _>(
+            RealtimeEventSubject::PriceUpdate("*".to_string()),
+            price_handler,
+        )
         .await?;
 
     Ok(())

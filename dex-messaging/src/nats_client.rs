@@ -1,7 +1,7 @@
 // Em shared-messaging/src/nats_client.rs
 use crate::config::NatsConfig;
 use crate::error::{NatsConnectSnafu, NatsPublishSnafu, NatsSnafu, NatsSubscribeSnafu};
-use crate::model::RealtimeEvent;
+use crate::model::{RealtimeEvent, RealtimeEventSubject};
 use crate::traits::Realtime;
 use crate::DexMessagingResult;
 use async_trait::async_trait;
@@ -45,7 +45,11 @@ impl Realtime for NatsMessagingClient {
         Ok(())
     }
 
-    async fn subscribe<E, F>(&self, subject: &str, mut handler: F) -> DexMessagingResult<()>
+    async fn subscribe<E, F>(
+        &self,
+        subject: RealtimeEventSubject,
+        mut handler: F,
+    ) -> DexMessagingResult<()>
     where
         E: RealtimeEvent,
         F: FnMut(E) -> DexMessagingResult<()> + Send,

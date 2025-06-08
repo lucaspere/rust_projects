@@ -1,4 +1,4 @@
-use crate::model::{PersistentEvent, RealtimeEvent};
+use crate::model::{PersistentEvent, RealtimeEvent, RealtimeEventSubject};
 use crate::DexMessagingResult;
 use async_trait::async_trait;
 
@@ -20,7 +20,11 @@ pub trait Realtime: Send + Sync {
 
     async fn publish_batch<E: RealtimeEvent>(&self, events: &[E]) -> DexMessagingResult<()>;
 
-    async fn subscribe<E, F>(&self, subject: &str, handler: F) -> DexMessagingResult<()>
+    async fn subscribe<E, F>(
+        &self,
+        subject: RealtimeEventSubject,
+        handler: F,
+    ) -> DexMessagingResult<()>
     where
         E: RealtimeEvent,
         F: FnMut(E) -> DexMessagingResult<()> + Send;
