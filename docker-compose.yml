@@ -13,7 +13,38 @@ services:
       - iggy_data:/app/local_data
       - ./server.toml:/app/server.toml
     restart: unless-stopped
+    depends_on:
+      - nats
+
+  nats:
+    image: nats:latest
+    container_name: nats-server
+    ports:
+      - "4222:4222"  # Client connections
+      - "8222:8222"  # HTTP monitoring
+      - "6222:6222"  # Routing port for clustering
+    command: 
+      - "--http_port"
+      - "8222"
+      - "--port"
+      - "4222"
+      - "--cluster_name"
+      - "dex-cluster"
+      - "--jetstream"
+      - "--store_dir"
+      - "/data"
+    volumes:
+      - nats_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8222/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
 
 volumes:
   iggy_data:
+    driver: local
+  nats_data:
     driver: local 
