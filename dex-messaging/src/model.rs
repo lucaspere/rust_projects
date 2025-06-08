@@ -1,4 +1,3 @@
-use crate::error::ErrorSnafu;
 use async_trait::async_trait;
 use iggy::identifier::Identifier;
 use serde::{Serialize, de::DeserializeOwned};
@@ -6,8 +5,6 @@ use serde::{Serialize, de::DeserializeOwned};
 pub mod dexevents {
     include!(concat!(env!("OUT_DIR"), "/dexevents.rs"));
 }
-
-pub(crate) type DexMessagingResult<T> = std::result::Result<T, ErrorSnafu>;
 
 pub trait Event: Serialize + DeserializeOwned + Send + Sync + 'static {
     fn stream_id() -> Identifier;

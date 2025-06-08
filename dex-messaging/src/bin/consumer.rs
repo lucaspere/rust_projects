@@ -1,13 +1,14 @@
+use bullpen_dex_messaging::config::IggyConfig;
 use bullpen_dex_messaging::model::dexevents;
-use bullpen_dex_messaging::{MessagingClient, MessagingConfig};
+use bullpen_dex_messaging::prelude::IggyMessagingClient;
+use bullpen_dex_messaging::traits::Persistent;
+use bullpen_dex_messaging::{DexMessagingResult, ErrorSnafu};
 use dotenv::dotenv;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use tokio::time::{sleep, Duration};
 use tracing::{error, info, warn, Level};
 use tracing_subscriber::FmtSubscriber;
-
-static PROCESSED_COUNT: AtomicU64 = AtomicU64::new(0);
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -19,7 +20,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     info!("🚀 Starting DEX Messaging Consumer...");
 
-    let iggy_client = MessagingClient::new(MessagingConfig::from_env()?).await?;
+    let iggy_client = Arc::new(IggyMessagingClient::new(IggyConfig::from_env()?).await?);
     info!("✅ Iggy client initialized successfully.");
 
     // Garantir que stream e topic existem
@@ -56,7 +57,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     });
 
     // Handler realista para processar eventos de swap
-    let handler = move |event: dexevents::SwapCompleted| -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    let handler = move |event: dexevents::SwapCompleted| {
         let count = processed_count.fetch_add(1, Ordering::Relaxed) + 1;
 
         info!(
@@ -83,16 +84,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Inicia o consumo de eventos
     iggy_client
-        .consume("swap_completed_consumer", handler)
+        .consume::<dexevents::SwapCompleted, _>("swap_completed_consumer", handler)
         .await?;
 
     Ok(())
 }
 
 /// Simula lógica de negócio realista para processamento de swaps
-fn simulate_business_logic(
-    event: &dexevents::SwapCompleted,
-) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+fn simulate_business_logic(event: &dexevents::SwapCompleted) -> DexMessagingResult<()> {
     // Simular diferentes cenários baseados no user_id
     match event.user_id % 10 {
         // 10% dos casos: simular erro de validação
@@ -102,7 +101,13 @@ fn simulate_business_logic(
                 event.user_id
             );
             if event.amount_in < 1.0 {
-                return Err("Amount too small for processing".into());
+                return Err(ErrorSnafu::Whatever {
+                    message: "Amount too small for processing".to_string(),
+                    source: Box::new(std::io::Error::new(
+                        std::io::ErrorKind::Other,
+                        "Amount too small for processing",
+                    )),
+                });
             }
         }
         // 10% dos casos: simular processamento lento
@@ -116,7 +121,13 @@ fn simulate_business_logic(
         // 10% dos casos: simular erro de rede/DB (retry)
         2 if event.transaction_id.contains("fail") => {
             error!("💥 Simulated database error for user {}", event.user_id);
-            return Err("Database connection failed - retry needed".into());
+            return Err(ErrorSnafu::Whatever {
+                message: "Database connection failed - retry needed".to_string(),
+                source: Box::new(std::io::Error::new(
+                    std::io::ErrorKind::Other,
+                    "Database connection failed - retry needed",
+                )),
+            });
         }
         // Casos normais
         _ => {
@@ -148,16 +159,19 @@ fn calculate_loyalty_points(amount: f64, token: &str) -> u64 {
 }
 
 /// Simula operação de salvamento no banco de dados
-fn simulate_database_save(
-    user_id: u64,
-    points: u64,
-) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+fn simulate_database_save(user_id: u64, points: u64) -> DexMessagingResult<()> {
     // Simular latência de DB
     std::thread::sleep(Duration::from_millis(50));
 
     // Simular falha ocasional de DB (5% dos casos em user_ids terminados em 7)
     if user_id % 20 == 7 {
-        return Err("Database timeout - connection lost".into());
+        return Err(ErrorSnafu::Whatever {
+            message: "Database timeout - connection lost".to_string(),
+            source: Box::new(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "Database timeout - connection lost",
+            )),
+        });
     }
 
     info!(
@@ -168,7 +182,9 @@ fn simulate_database_save(
 }
 
 /// Publica eventos de teste continuamente para simular tráfego real
-async fn event_publisher(client: MessagingClient) -> Result<(), Box<dyn std::error::Error>> {
+async fn event_publisher(
+    client: Arc<IggyMessagingClient>,
+) -> Result<(), Box<dyn std::error::Error>> {
     info!("📡 Starting event publisher for testing...");
 
     let tokens = vec![

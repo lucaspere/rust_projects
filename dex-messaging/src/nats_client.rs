@@ -1,10 +1,11 @@
 // Em shared-messaging/src/nats_client.rs
 use crate::config::NatsConfig;
 use crate::error::{NatsConnectSnafu, NatsPublishSnafu, NatsSnafu, NatsSubscribeSnafu};
-use crate::model::{DexMessagingResult, RealtimeEvent};
+use crate::model::RealtimeEvent;
 use crate::traits::Realtime;
+use crate::DexMessagingResult;
 use async_trait::async_trait;
-use futures::StreamExt;
+use futures::{future, StreamExt};
 use snafu::prelude::*;
 use tracing::{error, info, warn};
 
@@ -34,6 +35,12 @@ impl Realtime for NatsMessagingClient {
             .await
             .context(NatsPublishSnafu)
             .context(NatsSnafu)?;
+
+        Ok(())
+    }
+
+    async fn publish_batch<E: RealtimeEvent>(&self, events: &[E]) -> DexMessagingResult<()> {
+        future::join_all(events.iter().map(|event| self.publish(event))).await;
 
         Ok(())
     }

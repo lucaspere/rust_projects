@@ -1,5 +1,5 @@
 use crate::error::VariableSnafu;
-use crate::Result;
+use crate::DexMessagingResult;
 use snafu::ResultExt;
 use std::env;
 #[derive(Debug, Clone)]
@@ -19,7 +19,7 @@ pub struct IggyConfig {
 }
 
 impl IggyConfig {
-    pub fn from_env() -> Result<Self> {
+    pub fn from_env() -> DexMessagingResult<Self> {
         let server_address = env::var("IGGY_SERVER_ADDRESS").context(VariableSnafu {
             message: "IGGY_SERVER_ADDRESS".to_string(),
         })?;
@@ -41,7 +41,7 @@ pub struct NatsConfig {
 }
 
 impl NatsConfig {
-    pub fn from_env() -> Result<Self> {
+    pub fn from_env() -> DexMessagingResult<Self> {
         let server_address = env::var("NATS_URL").context(VariableSnafu {
             message: "NATS_URL".to_string(),
         })?;

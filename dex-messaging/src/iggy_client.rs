@@ -1,7 +1,8 @@
 use crate::config::IggyConfig;
 use crate::error::{IggyClientSnafu, IggySnafu};
-use crate::model::{DexMessagingResult, PersistentEvent};
+use crate::model::PersistentEvent;
 use crate::traits::Persistent;
+use crate::DexMessagingResult;
 use async_trait::async_trait;
 use iggy::{
     client::{Client, MessageClient, StreamClient, TopicClient, UserClient},

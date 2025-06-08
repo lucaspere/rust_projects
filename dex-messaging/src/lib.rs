@@ -66,8 +66,7 @@ pub mod prelude {
     pub use crate::nats_client::NatsMessagingClient;
 }
 
-pub type Result<T> = std::result::Result<T, ErrorSnafu>;
+pub type DexMessagingResult<T> = std::result::Result<T, ErrorSnafu>;
 
-// Re-export commonly used items
 pub use error::ErrorSnafu;
 pub use model::Event;
