@@ -3,14 +3,18 @@ use crate::error::{IggyClientSnafu, IggySnafu};
 use crate::model::{DexMessagingResult, PersistentEvent};
 use crate::traits::Persistent;
 use async_trait::async_trait;
-use iggy::client::{Client, MessageClient, StreamClient, TopicClient, UserClient};
+use iggy::client::{
+    Client, ConsumerOffsetClient, MessageClient, StreamClient, TopicClient, UserClient,
+};
 use iggy::clients::client::IggyClient;
+use iggy::clients::consumer::IggyConsumerBuilder;
 use iggy::compression::compression_algorithm::CompressionAlgorithm;
 use iggy::consumer::Consumer;
 use iggy::error::IggyError;
 use iggy::identifier::Identifier;
 use iggy::messages::poll_messages::{PollMessages, PollingStrategy};
 use iggy::messages::send_messages::{Message, Partitioning, SendMessages};
+use iggy::stream_builder::IggyConsumerConfig;
 use iggy::streams::create_stream::CreateStream;
 use iggy::tcp::client::TcpClient;
 use iggy::tcp::config::{TcpClientConfig, TcpClientReconnectionConfig};
@@ -20,7 +24,7 @@ use iggy::utils::expiry::IggyExpiry;
 use iggy::utils::topic_size::MaxTopicSize;
 use snafu::prelude::*;
 use std::sync::Arc;
-use tokio::time::{sleep, Duration};
+use tokio::time::{Duration, sleep};
 
 pub struct IggyMessagingClient {
     client: IggyClient,
@@ -110,17 +114,17 @@ impl Persistent for IggyMessagingClient {
         );
 
         let command = PollMessages {
-            consumer: Consumer::new(
+            consumer: Consumer::group(
                 Identifier::named(consumer_id)
                     .context(IggyClientSnafu)
                     .context(IggySnafu)?,
             ),
             stream_id: E::stream_id(),
             topic_id: E::topic_id(),
-            partition_id: Some(1), // Para simplificar; pode ser mais complexo
+            partition_id: None,
             strategy: PollingStrategy::next(),
             count: 10, // Pega até 10 mensagens por vez
-            auto_commit: true,
+            auto_commit: false,
         };
 
         loop {
@@ -137,25 +141,69 @@ impl Persistent for IggyMessagingClient {
                 )
                 .await;
             match polled {
-                Ok(messages) if !messages.messages.is_empty() => {
-                    for msg in messages.messages {
-                        match E::decode(&msg.payload[..]) {
+                Ok(messages_result) if !messages_result.messages.is_empty() => {
+                    let current_partition_id = messages_result.partition_id;
+                    let mut last_processed_offset: u64 = 0;
+                    for msg in messages_result.messages {
+                        match E::decode(&msg.payload.as_ref()[..]) {
+                            // Use as_ref() para &[u8]
                             Ok(event) => {
                                 if let Err(e) = handler(event) {
-                                    eprintln!("Error processing event: {:?}", e);
+                                    eprintln!(
+                                        "Error processing event at offset {}: {:?}",
+                                        msg.offset, e
+                                    );
+                                    // Não atualiza o offset se houve erro, permitindo re-entrega.
+                                } else {
+                                    last_processed_offset = msg.offset; // Armazena o offset da última mensagem processada com sucesso
+                                    println!(
+                                        "Successfully processed event at offset {}",
+                                        msg.offset
+                                    );
                                 }
                             }
-                            Err(e) => eprintln!("Failed to deserialize event: {:?}", e),
+                            Err(e) => {
+                                eprintln!(
+                                    "Failed to deserialize event at offset {}: {:?}",
+                                    msg.offset, e
+                                );
+                                // Para mensagens mal-formadas, você pode querer pular e dar ACK para não travar a fila.
+                                // Se você der ACK aqui, elas não serão re-entregues.
+                                // Para este exemplo, vamos dar ACK mesmo se mal-formado para continuar.
+                                last_processed_offset = msg.offset;
+                                println!(
+                                    "Acknowledged malformed message with offset: {}",
+                                    msg.offset
+                                );
+                            }
                         }
+                    }
+
+                    if last_processed_offset > 0 {
+                        self.client
+                            .store_consumer_offset(
+                                &command.consumer,
+                                &command.stream_id,
+                                &command.topic_id,
+                                Some(current_partition_id), // Usar o partition_id do PolledMessages
+                                last_processed_offset,
+                            )
+                            .await
+                            .context(IggyClientSnafu)
+                            .context(IggySnafu)?;
+                        println!(
+                            "Stored consumer offset for partition {} at offset {}",
+                            current_partition_id, last_processed_offset
+                        );
                     }
                 }
                 Ok(_) => {
                     // Nenhuma mensagem, espera um pouco para não sobrecarregar a CPU
-                    sleep(Duration::from_millis(100)).await;
+                    tokio::time::sleep(Duration::from_millis(100)).await;
                 }
                 Err(e) => {
                     println!("Failed to poll messages: {:?}. Retrying...", e);
-                    sleep(Duration::from_secs(1)).await;
+                    tokio::time::sleep(Duration::from_secs(1)).await;
                 }
             }
         }

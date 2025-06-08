@@ -1,7 +1,7 @@
 use crate::error::ErrorSnafu;
 use async_trait::async_trait;
 use iggy::identifier::Identifier;
-use serde::{de::DeserializeOwned, Serialize};
+use serde::{Serialize, de::DeserializeOwned};
 
 pub mod dexevents {
     include!(concat!(env!("OUT_DIR"), "/dexevents.rs"));
@@ -28,11 +28,6 @@ pub trait PersistentEvent: prost::Message + Default + Send + Sync + 'static {
     }
 }
 
-#[async_trait]
-pub trait RealtimeEvent: prost::Message + Default + Send + Sync + 'static {
-    fn subject(&self) -> String;
-}
-
 impl PersistentEvent for dexevents::SwapCompleted {
     fn stream_id() -> Identifier {
         Identifier::numeric(1).unwrap()
@@ -45,6 +40,11 @@ impl PersistentEvent for dexevents::SwapCompleted {
     fn event_name() -> &'static str {
         "swap_completed"
     }
+}
+
+#[async_trait]
+pub trait RealtimeEvent: prost::Message + Default + Send + Sync + 'static {
+    fn subject(&self) -> String;
 }
 
 #[async_trait]
