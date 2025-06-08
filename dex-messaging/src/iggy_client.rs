@@ -4,6 +4,7 @@ use crate::model::PersistentEvent;
 use crate::traits::Persistent;
 use crate::DexMessagingResult;
 use async_trait::async_trait;
+use iggy::client::ConsumerOffsetClient;
 use iggy::{
     client::{Client, MessageClient, StreamClient, TopicClient, UserClient},
     clients::client::IggyClient,
@@ -23,7 +24,7 @@ use iggy::{
 };
 use snafu::prelude::*;
 use std::sync::Arc;
-use tokio::time::{sleep, Duration};
+use tokio::time::Duration;
 
 pub struct IggyMessagingClient {
     client: IggyClient,
