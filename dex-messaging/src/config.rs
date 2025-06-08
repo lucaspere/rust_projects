@@ -1,16 +1,16 @@
-use crate::error::{ConfigSnafu, Result};
+use crate::error::VariableSnafu;
+use crate::Result;
+use snafu::ResultExt;
 use std::env;
-
 #[derive(Debug, Clone)]
 pub struct LoginCredentials {
     pub username: String,
     pub password: String,
 }
 
-#[derive(Debug, Clone)]
-pub struct MessagingConfig {
-    pub iggy_server_address: String,
-    pub nats_server_address: String,
+#[derive(Debug, Clone, Default)]
+pub struct IggyConfig {
+    pub server_address: String,
     pub connect_timeout_ms: u64,
     pub request_timeout_ms: u64,
     pub reconnect_interval_ms: u64,
@@ -18,39 +18,37 @@ pub struct MessagingConfig {
     pub login_credentials: Option<LoginCredentials>,
 }
 
-impl MessagingConfig {
+impl IggyConfig {
     pub fn from_env() -> Result<Self> {
-        let iggy_server_address = env::var("IGGY_SERVER_ADDRESS").map_err(|_| {
-            ConfigSnafu {
-                message: "IGGY_SERVER_ADDRESS".to_string(),
-            }
-            .build()
+        let server_address = env::var("IGGY_SERVER_ADDRESS").context(VariableSnafu {
+            message: "IGGY_SERVER_ADDRESS".to_string(),
         })?;
-        let username = env::var("IGGY_USERNAME").map_err(|_| {
-            ConfigSnafu {
-                message: "IGGY_USERNAME".to_string(),
-            }
-            .build()
-        })?;
-        let password = env::var("IGGY_PASSWORD").map_err(|_| {
-            ConfigSnafu {
-                message: "IGGY_PASSWORD".to_string(),
-            }
-            .build()
-        })?;
-        let login_credentials = LoginCredentials { username, password };
 
-        let nats_server_address = env::var("NATS_SERVER_ADDRESS").unwrap_or_else(|_| {
-            "nats://localhost:4222".to_string() // Default NATS server address
-        });
         Ok(Self {
-            iggy_server_address,
-            nats_server_address,
-            connect_timeout_ms: 1,
-            max_reconnect_retries: None,
-            reconnect_interval_ms: 3,
-            request_timeout_ms: 1,
-            login_credentials: Some(login_credentials),
+            server_address,
+            ..Default::default()
+        })
+    }
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct NatsConfig {
+    pub server_address: String,
+    pub connect_timeout_ms: u64,
+    pub request_timeout_ms: u64,
+    pub reconnect_interval_ms: u64,
+    pub max_reconnect_retries: Option<u32>,
+}
+
+impl NatsConfig {
+    pub fn from_env() -> Result<Self> {
+        let server_address = env::var("NATS_URL").context(VariableSnafu {
+            message: "NATS_URL".to_string(),
+        })?;
+
+        Ok(Self {
+            server_address,
+            ..Default::default()
         })
     }
 }

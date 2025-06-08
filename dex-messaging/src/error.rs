@@ -1,34 +1,59 @@
-// shared-messaging/src/error.rs
 use snafu::prelude::*;
-use std::backtrace::Backtrace;
+use std::{backtrace::Backtrace, env::VarError};
 
 #[derive(Debug, Snafu)]
-#[snafu(visibility(pub))] // Torna os seletores de contexto públicos
-pub enum MessagingError {
-    #[snafu(display("Failed to connect or interact with Iggy server"))]
+#[snafu(visibility(pub))]
+pub enum ErrorSnafu {
+    #[snafu(display("Failed to encode event payload"))]
+    Encode {
+        source: prost::EncodeError,
+        backtrace: Backtrace,
+    },
+    #[snafu(display("Failed to decode event payload"))]
+    Decode {
+        source: prost::DecodeError,
+        backtrace: Backtrace,
+    },
+    #[snafu(display("NATS error"))]
+    Nats {
+        source: NatsError,
+        backtrace: Backtrace,
+    },
+    #[snafu(display("Iggy error"))]
     Iggy {
+        source: IggyError,
+        backtrace: Backtrace,
+    },
+
+    #[snafu(display("{}", message))]
+    Whatever {
+        message: String,
+        source: Box<dyn std::error::Error + Send + Sync>,
+    },
+
+    #[snafu(display("{}", message))]
+    Variable { message: String, source: VarError },
+}
+
+#[derive(Debug, Snafu)]
+#[snafu(visibility(pub))]
+pub enum IggyError {
+    #[snafu(display("Iggy client error"))]
+    IggyClient {
         source: iggy::error::IggyError,
         backtrace: Backtrace,
     },
 
-    #[snafu(display("Failed to serialize or deserialize event payload"))]
-    Serialization {
-        source: serde_json::Error,
-        backtrace: Backtrace,
-    },
-
     #[snafu(display("A required configuration variable is missing: {}", message))]
-    Config {
+    IggyConfig {
         message: String,
         backtrace: Backtrace,
     },
+}
 
-    #[snafu(display("NATS client error"))]
-    Nats {
-        source: async_nats::Error,
-        backtrace: Backtrace,
-    },
-
+#[derive(Debug, Snafu)]
+#[snafu(visibility(pub))]
+pub enum NatsError {
     #[snafu(display("Failed to publish event"))]
     NatsPublish {
         source: async_nats::PublishError,
@@ -47,5 +72,3 @@ pub enum MessagingError {
         backtrace: Backtrace,
     },
 }
-
-pub type Result<T> = std::result::Result<T, MessagingError>;

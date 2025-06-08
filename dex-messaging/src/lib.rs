@@ -42,12 +42,32 @@
 //!     println!("Evento SwapCompleted publicado!");
 //! }
 //! ```
-pub mod client;
+
+pub mod iggy_client;
+pub mod nats_client;
+
+// Módulos de suporte
 pub mod config;
 pub mod error;
 pub mod model;
+pub mod traits;
 
-pub use client::MessagingClient;
-pub use config::MessagingConfig;
-pub use error::{MessagingError, Result};
+pub mod prelude {
+    pub use crate::model::{
+        dexevents::{PriceUpdate, SwapCompleted},
+        PersistentEvent, RealtimeEvent,
+    };
+
+    pub use crate::config::IggyConfig;
+    pub use crate::iggy_client::IggyMessagingClient;
+
+    pub use crate::config::NatsConfig;
+    pub use crate::error::NatsError;
+    pub use crate::nats_client::NatsMessagingClient;
+}
+
+pub type Result<T> = std::result::Result<T, ErrorSnafu>;
+
+// Re-export commonly used items
+pub use error::ErrorSnafu;
 pub use model::Event;

@@ -1,11 +1,13 @@
+use crate::error::ErrorSnafu;
 use async_trait::async_trait;
 use iggy::identifier::Identifier;
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde::{de::DeserializeOwned, Serialize};
 
-// Inclui o código gerado pelo prost a partir do events.proto
 pub mod dexevents {
     include!(concat!(env!("OUT_DIR"), "/dexevents.rs"));
 }
+
+pub(crate) type DexMessagingResult<T> = std::result::Result<T, ErrorSnafu>;
 
 pub trait Event: Serialize + DeserializeOwned + Send + Sync + 'static {
     fn stream_id() -> Identifier;
@@ -30,9 +32,6 @@ pub trait PersistentEvent: prost::Message + Default + Send + Sync + 'static {
 pub trait RealtimeEvent: prost::Message + Default + Send + Sync + 'static {
     fn subject(&self) -> String;
 }
-
-// --- Implementações ---
-// Implementamos nosso trait para as structs geradas pelo Prost.
 
 impl PersistentEvent for dexevents::SwapCompleted {
     fn stream_id() -> Identifier {
