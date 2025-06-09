@@ -48,6 +48,7 @@ pub mod nats_client;
 
 // Módulos de suporte
 pub mod config;
+pub mod distributed_manager;
 pub mod error;
 pub mod manager;
 pub mod model;
@@ -67,7 +68,7 @@ pub mod prelude {
     pub use crate::error::NatsError;
     pub use crate::nats_client::NatsMessagingClient;
 
-    pub use crate::traits::{DynRealtime, DynRealtimeExt, Persistent};
+    pub use crate::traits::{Persistent, RealtimePublisher, RealtimePublisherExt};
 }
 
 pub type DexMessagingResult<T> = std::result::Result<T, ErrorSnafu>;

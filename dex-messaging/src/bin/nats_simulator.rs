@@ -4,7 +4,7 @@ use bullpen_dex_messaging::{
     model::{dexevents::PriceUpdate, RealtimeEventSubject},
     prelude::NatsMessagingClient,
     providers::MockStreamProvider,
-    traits::{DynRealtime, DynRealtimeExt},
+    traits::{RealtimePublisher, RealtimePublisherExt},
     DexMessagingResult,
 };
 use dotenv::dotenv;
@@ -27,7 +27,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     info!("🚀 Starting NATS Event Simulator...");
     let nats_client = NatsMessagingClient::new(NatsConfig::from_env()?).await?;
     let provider = Arc::new(MockStreamProvider);
-    let publisher: Arc<dyn DynRealtime> = Arc::new(nats_client.clone());
+    let publisher: Arc<dyn RealtimePublisher> = Arc::new(nats_client.clone());
     let subscription_service = SubscriptionService::new(publisher.clone(), provider);
     info!("✅ Connected to NATS and Iggy successfully");
 
@@ -76,7 +76,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 /// Publishes realistic price updates for various trading pairs
-async fn price_publisher(client: Arc<dyn DynRealtime>) -> Result<(), Box<dyn std::error::Error>> {
+async fn price_publisher(
+    client: Arc<dyn RealtimePublisher>,
+) -> Result<(), Box<dyn std::error::Error>> {
     info!("📡 Starting price publisher...");
 
     // Define trading pairs with base prices

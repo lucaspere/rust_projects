@@ -19,12 +19,12 @@ struct ConnectionManager {
 #[derive(Clone)]
 pub struct SubscriptionService {
     manager: Arc<Mutex<ConnectionManager>>,
-    publisher: Arc<dyn DynRealtime>,
+    publisher: Arc<dyn RealtimePublisher>,
     provider: Arc<dyn StreamProvider>,
 }
 
 impl SubscriptionService {
-    pub fn new(publisher: Arc<dyn DynRealtime>, provider: Arc<dyn StreamProvider>) -> Self {
+    pub fn new(publisher: Arc<dyn RealtimePublisher>, provider: Arc<dyn StreamProvider>) -> Self {
         Self {
             manager: Arc::new(Mutex::new(ConnectionManager::default())),
             publisher,

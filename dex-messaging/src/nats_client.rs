@@ -1,6 +1,6 @@
 use crate::config::NatsConfig;
 use crate::error::{NatsConnectSnafu, NatsPublishSnafu, NatsSnafu};
-use crate::traits::DynRealtime;
+use crate::traits::RealtimePublisher;
 use crate::DexMessagingResult;
 use async_trait::async_trait;
 use futures::future;
@@ -23,7 +23,7 @@ impl NatsMessagingClient {
 }
 
 #[async_trait]
-impl DynRealtime for NatsMessagingClient {
+impl RealtimePublisher for NatsMessagingClient {
     async fn publish_raw(&self, subject: String, payload: Vec<u8>) -> DexMessagingResult<()> {
         self.client
             .publish(subject, payload.into())

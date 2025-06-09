@@ -2,6 +2,7 @@ use async_trait::async_trait;
 use iggy::identifier::Identifier;
 use serde::{de::DeserializeOwned, Serialize};
 use strum::Display;
+use tokio::
 
 pub mod dexevents {
     include!(concat!(env!("OUT_DIR"), "/dexevents.rs"));
@@ -63,4 +64,6 @@ pub enum RealtimeEventSubject {
     PriceUpdate(String),
     #[strum(serialize = "swaps.{0}")]
     Txs(String),
+    #[strum(serialize = "{0}")]
+    Custom(String),
 }

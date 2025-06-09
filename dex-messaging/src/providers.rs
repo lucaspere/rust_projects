@@ -9,7 +9,7 @@ pub trait StreamProvider: Send + Sync + 'static {
     async fn start_stream(
         &self,
         stream_id: String,
-        publisher: Arc<dyn DynRealtime>,
+        publisher: Arc<dyn RealtimePublisher>,
     ) -> DexMessagingResultAsync<()>;
 }
 
@@ -20,7 +20,7 @@ impl StreamProvider for MockStreamProvider {
     async fn start_stream(
         &self,
         stream_id: String,
-        publisher: Arc<dyn DynRealtime>,
+        publisher: Arc<dyn RealtimePublisher>,
     ) -> DexMessagingResultAsync<()> {
         let mut price = 100.0;
         let mut timer = interval(Duration::from_secs(1));

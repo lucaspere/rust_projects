@@ -16,7 +16,7 @@ pub trait Persistent: Send + Sync {
 }
 
 #[async_trait]
-pub trait RealtimeSubscription: Send + Sync {
+pub trait RealtimeSubscriber: Send + Sync {
     async fn subscribe<E, F>(
         &self,
         subject: RealtimeEventSubject,
@@ -30,20 +30,20 @@ pub trait RealtimeSubscription: Send + Sync {
 /// Dyn-compatible trait for realtime messaging
 /// This trait uses serialized data internally to be object-safe while providing a generic interface
 #[async_trait]
-pub trait DynRealtime: Send + Sync {
+pub trait RealtimePublisher: Send + Sync {
     async fn publish_raw(&self, subject: String, payload: Vec<u8>) -> DexMessagingResult<()>;
     async fn publish_batch_raw(&self, messages: &[(String, Vec<u8>)]) -> DexMessagingResult<()>;
 }
 
 /// Extension trait to provide generic methods for DynRealtime
 #[async_trait]
-pub trait DynRealtimeExt {
+pub trait RealtimePublisherExt {
     async fn publish<E: RealtimeEvent>(&self, event: &E) -> DexMessagingResult<()>;
     async fn publish_batch<E: RealtimeEvent>(&self, events: &[E]) -> DexMessagingResult<()>;
 }
 
 #[async_trait]
-impl<T: DynRealtime + ?Sized> DynRealtimeExt for T {
+impl<T: RealtimePublisher + ?Sized> RealtimePublisherExt for T {
     async fn publish<E: RealtimeEvent>(&self, event: &E) -> DexMessagingResult<()> {
         let subject = event.subject();
         let payload = event.encode_to_vec();

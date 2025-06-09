@@ -33,6 +33,12 @@ pub enum ErrorSnafu {
 
     #[snafu(display("{}", message))]
     Variable { message: String, source: VarError },
+
+    #[snafu(display("Failed to get Redis connection"))]
+    Redis {
+        source: redis::RedisError,
+        backtrace: Backtrace,
+    },
 }
 
 #[derive(Debug, Snafu)]
