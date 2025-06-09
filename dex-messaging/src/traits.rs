@@ -15,8 +15,19 @@ pub trait Persistent: Send + Sync {
         F: FnMut(E) -> DexMessagingResult<()> + Send;
 }
 
+/// Dyn-compatible trait for realtime subscribing
 #[async_trait]
 pub trait RealtimeSubscriber: Send + Sync {
+    async fn subscribe_raw(
+        &self,
+        subject: String,
+        handler: Box<dyn Fn(Vec<u8>) -> DexMessagingResult<()> + Send + Sync>,
+    ) -> DexMessagingResult<()>;
+}
+
+/// Extension trait to provide generic methods for RealtimeSubscriber
+#[async_trait]
+pub trait RealtimeSubscriberExt {
     async fn subscribe<E, F>(
         &self,
         subject: RealtimeEventSubject,

@@ -68,7 +68,9 @@ pub mod prelude {
     pub use crate::error::NatsError;
     pub use crate::nats_client::NatsMessagingClient;
 
-    pub use crate::traits::{Persistent, RealtimePublisher, RealtimePublisherExt};
+    pub use crate::traits::{
+        Persistent, RealtimePublisher, RealtimePublisherExt, RealtimeSubscriber,
+    };
 }
 
 pub type DexMessagingResult<T> = std::result::Result<T, ErrorSnafu>;

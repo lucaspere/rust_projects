@@ -2,7 +2,6 @@ use async_trait::async_trait;
 use iggy::identifier::Identifier;
 use serde::{de::DeserializeOwned, Serialize};
 use strum::Display;
-use tokio::
 
 pub mod dexevents {
     include!(concat!(env!("OUT_DIR"), "/dexevents.rs"));
@@ -66,4 +65,15 @@ pub enum RealtimeEventSubject {
     Txs(String),
     #[strum(serialize = "{0}")]
     Custom(String),
+}
+
+#[async_trait]
+impl RealtimeEvent for dexevents::StreamShutdown {
+    fn subject(&self) -> String {
+        self.to_subject().to_string()
+    }
+
+    fn to_subject(&self) -> RealtimeEventSubject {
+        RealtimeEventSubject::Custom(format!("control.stream.shutdown.{}", self.stream_id))
+    }
 }

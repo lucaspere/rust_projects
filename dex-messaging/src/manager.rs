@@ -16,6 +16,7 @@ struct ConnectionManager {
     active_streams: HashMap<String, ManagedConnection>,
 }
 
+/// O serviço público que nossos backends usarão.
 #[derive(Clone)]
 pub struct SubscriptionService {
     manager: Arc<Mutex<ConnectionManager>>,

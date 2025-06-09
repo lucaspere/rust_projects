@@ -1,10 +1,12 @@
 use crate::config::NatsConfig;
-use crate::error::{NatsConnectSnafu, NatsPublishSnafu, NatsSnafu};
-use crate::traits::RealtimePublisher;
+use crate::error::{NatsConnectSnafu, NatsPublishSnafu, NatsSnafu, NatsSubscribeSnafu};
+use crate::model::{RealtimeEvent, RealtimeEventSubject};
+use crate::traits::{RealtimePublisher, RealtimeSubscriber};
 use crate::DexMessagingResult;
 use async_trait::async_trait;
-use futures::future;
+use futures::{future, StreamExt};
 use snafu::prelude::*;
+use tracing::{error, info, warn};
 
 #[derive(Clone)]
 pub struct NatsMessagingClient {
@@ -19,6 +21,31 @@ impl NatsMessagingClient {
             .context(NatsSnafu)?;
 
         Ok(Self { client })
+    }
+}
+
+#[async_trait]
+impl RealtimeSubscriber for NatsMessagingClient {
+    async fn subscribe_raw(
+        &self,
+        subject: String,
+        handler: Box<dyn Fn(Vec<u8>) -> DexMessagingResult<()> + Send + Sync>,
+    ) -> DexMessagingResult<()> {
+        info!(subject = %subject, "Subscribing to realtime subject");
+        let mut sub = self
+            .client
+            .subscribe(subject.clone())
+            .await
+            .context(NatsSubscribeSnafu)
+            .context(NatsSnafu)?;
+
+        while let Some(msg) = sub.next().await {
+            if let Err(e) = handler(msg.payload.to_vec()) {
+                error!(subject = %subject, error = %e, "Error processing realtime event");
+            }
+        }
+
+        Ok(())
     }
 }
 

@@ -19,3 +19,7 @@ message PriceUpdate {
   double price = 2;
   uint64 timestamp = 3;
 }
+
+message StreamShutdown {
+  string stream_id = 1;
+}
